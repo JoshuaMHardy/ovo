@@ -1,0 +1,100 @@
+#!/software/conda/envs/pyrosetta/bin/python3.7
+#
+# Calculates contact molecular surface and various other metrics suggested by
+# Brian Coventry. XML is unaltered from Brian.
+#
+# Adapted by David Prihoda for RFpeptide scoring based on RFpeptide supplement
+#
+# Usage:
+#
+#   ./pyrosetta_interface_metrics.py PDB_FOLDER OUT_CSV
+#
+# where FOLDER contains PDBs of complexes you want to score.
+#
+
+
+import os
+import glob
+import argparse
+import multiprocessing
+import json
+import sys
+
+from pyrosetta import *
+from rosetta.protocols.rosetta_scripts import *
+
+script_dir = os.path.dirname(__file__)
+
+p = argparse.ArgumentParser()
+p.add_argument("data_dir", help="Folder of FastDesign outputs to process. Must contain both binder and receptor.")
+p.add_argument("out_jsonl", help="Output jsonl file name")
+p.add_argument(
+    "--suffix",
+    default="",
+    help="Suffix on outputs to process. e.g. if --suffix=complex, then only processes files named *complex.pdb",
+)
+p.add_argument("--cyclic", action="store_true", default=False, help="Macrocyclic peptide design")
+p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
+args = p.parse_args()
+
+if args.cyclic:
+    init("-corrections::beta_nov16 -detect_disulf false")
+    parser = RosettaScriptsParser()
+    protocol_path = script_dir + "/interface_metrics_rfpeptides.xml"
+else:
+    # TODO include "-holes:dalphaball /software/rosetta/DAlphaBall.gcc"
+    # As in https://github.com/RosettaCommons/RFDesign/blob/main/scripts/get_interface_metrics.py
+    # To enable BuriedUnsatHbonds in interface_metrics_rfpeptides.xml
+    init("-corrections::beta_nov16 -detect_disulf false -run:preserve_header true")
+    parser = RosettaScriptsParser()
+    protocol_path = script_dir + "/interface_metrics_rfdesign.xml"
+
+ncpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
+print(f"Using {ncpu} cores")
+
+
+def calculate(pdb_path):
+    basename = os.path.basename(pdb_path).removesuffix(".pdb")
+    row = {"id": basename}
+    try:
+        pose = pose_from_pdb(pdb_path)
+        # We re-initialize the mover for each PDB to avoid remembering stuff from previous peptides, like peptide length
+        protocol = parser.generate_mover(protocol_path)
+        # Apply movers
+        protocol.apply(pose)
+        print("SCORES", pose.scores)
+        for k, v in pose.scores.items():
+            row[k] = float(v)
+    except Exception as e:
+        row["error"] = f"{e} ({type(e).__name__})"
+        print(f"ERROR processing {basename}: {row['error']}")
+        if args.debug:
+            raise
+    return row
+
+
+if __name__ == "__main__":
+    files = sorted(glob.glob(os.path.join(args.data_dir, f"*{args.suffix}.pdb")))
+
+    if not files:
+        print("No files found in", args.data_dir)
+        sys.exit(0)
+
+    if args.debug:
+        records = map(calculate, files)
+    else:
+        with multiprocessing.Pool(min(ncpu, len(files))) as p:
+            records = p.map(calculate, files)
+
+    num_errors = 0
+    with open(args.out_jsonl, "wt") as f:
+        for record in records:
+            json.dump(record, f)
+            if record.get("error"):
+                num_errors += 1
+            f.write("\n")
+
+    if num_errors == len(files):
+        raise ValueError(f"All results failed: {record['error']}")
+
+    print("Saved to:", args.out_jsonl)

@@ -1,0 +1,10 @@
+{
+  "design_path": "output",
+  "starting_pdb": "target.pdb",
+
+  "binder_name": "5ELI",
+  "chains": "A",
+  "target_hotspot_residues": "A78",
+  "lengths": [40, 40],
+  "number_of_final_designs": 1
+}

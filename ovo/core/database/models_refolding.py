@@ -1,0 +1,60 @@
+from abc import ABC
+from typing import List, Callable, Optional
+
+from ovo.core.database import DescriptorJob
+from ovo.core.database.descriptors_refolding import REFOLDING_TESTS_BY_TYPE
+from ovo.core.database.models import DescriptorWorkflow, WorkflowTypes
+from ovo.core.scheduler.base_scheduler import Scheduler
+from dataclasses import dataclass, field
+
+
+class RefoldingSupportedDesignWorkflow(ABC):
+    """Abstract class that defines an interface for workflows supported by the RefoldingWorkflow workflow"""
+
+    def get_refolding_native_pdb_path(self, contig_index: int) -> Optional[str]:
+        raise NotImplementedError()
+
+    def get_refolding_design_paths(self, design_ids: list[str]) -> list[str]:
+        raise NotImplementedError()
+
+    def get_refolding_design_type(self) -> str:
+        raise NotImplementedError()
+
+
+@WorkflowTypes.register("Refolding workflow")
+@dataclass
+class RefoldingWorkflow(DescriptorWorkflow):
+    chains: List[str] = field(default_factory=lambda: ["FULL"])
+    tests: List[str] = None
+    design_type: str = None
+    native_pdb_path: str = None
+
+    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
+        from ovo.core.logic.descriptor_logic import submit_refolding
+
+        return submit_refolding(self, scheduler)
+
+    def process_results(self, job: DescriptorJob, callback: Callable = None):
+        from ovo import db
+        from ovo.core.logic.descriptor_logic import read_descriptor_file_values
+
+        descriptor_values = read_descriptor_file_values(
+            descriptor_job=job,
+            # descriptor key prefix (pipeline|tool_key) -> filename to parse
+            filenames={f"refolding|{test}": test for test in self.tests},
+            # mapping from design.id to ID column in produced file
+            design_id_mapping={design_id: design_id for design_id in self.design_ids},
+        )
+        db.save_all(descriptor_values + [job])
+
+    def validate(self):
+        super().validate()
+        if not self.design_type:
+            raise ValueError("Design type not specified")
+        if not self.tests:
+            raise ValueError("No tests specified")
+        for test in self.tests:
+            # TODO validate test name
+            assert test in REFOLDING_TESTS_BY_TYPE[self.design_type], (
+                f"Invalid test for design type {self.design_type}: {test}"
+            )

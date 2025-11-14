@@ -1,0 +1,111 @@
+.rounded-border {
+  display: inline-block;
+  padding: 2px 4px;
+  border: 2px solid grey;
+  border-radius: 10px;
+  background-color: white;
+  color: black;
+  font-weight: normal;
+  text-align: center;
+}
+
+.add-button {
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  color: grey;
+  border: 1px solid grey;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 5px;
+  margin-right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.add-button:hover {
+  background-color: darkgrey;
+}
+
+.add-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+}
+
+.live-input {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #fff;
+  box-shadow: 0 0 0 calc(1px / var(--scale-x, 1)) rgba(63, 63, 68, 0.05),
+    0 1px calc(3px / var(--scale-x, 1)) 0 rgba(34, 33, 81, 0.15);
+  border-radius: calc(4px / var(--scale-x, 1));
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  color: #333;
+  font-weight: 400;
+  font-size: 1rem;
+  font-family: sans-serif;
+  width: 100%;
+  transition: border-color 0.3s ease;
+}
+
+.live-input:focus {
+  outline: none;
+  border-color: #66afe9;
+  box-shadow: 0 0 5px rgba(102, 175, 233, 0.6);
+}
+
+.live-input:read-only {
+  background-color: #eaeaea;
+}
+
+.contigRowContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 400px;
+}
+
+.contigRowColumn1 {
+  width: 50%;
+  max-width: 200px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.contigRowColumn2 {
+  width: 80%;
+  font-size: 14px;
+}
+
+.SortableOverlay .contigRowColumn2 {
+  display: none;
+}
+
+.contigPart {
+  padding: 2px 3px;
+  margin: 2px 4px;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.contigPart:focus {
+  outline: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.inputError {
+  color: #ee0000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .contigPart {
+    color: white;
+  }
+}

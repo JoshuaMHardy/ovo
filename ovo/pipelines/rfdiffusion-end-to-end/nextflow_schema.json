@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "RFdiffusion end-to-end pipeline",
+  "description": "",
+  "type": "object",
+  "required": [
+    "design_type",
+    "rfdiffusion_input_pdb",
+    "rfdiffusion_contig",
+    "rfdiffusion_num_designs"
+  ],
+  "properties": {
+    "design_type": {
+      "type": "string",
+      "enum": ["binder", "scaffold"],
+      "description": "Type of the design task"
+    },
+    "batch_size": {
+      "type": "integer",
+      "description": "Number of designs to generate in one batch (each batch can run in parallel)",
+      "default": 100
+    },
+    "rfdiffusion_input_pdb": {
+      "type": "string",
+      "description": "Input PDB file for RFdiffusion"
+    },
+    "rfdiffusion_contig": {
+      "type": "string",
+      "description": "The contig map string to pass to contigmap.contigs, e.g. 'A52-156/0 50-60' for binder design or 'A20-30/10-20/A40-50' for scaffold design"
+    },
+    "rfdiffusion_num_designs": {
+      "type": "integer",
+      "description": "Number of backbones to generate with RFdiffusion"
+    },
+    "hotspot": {
+      "type": "string",
+      "description": "Binding hotspot for RFdiffusion and downstream evaluation, including chain ids e.g. C123,C124"
+    },
+    "rfdiffusion_run_parameters": {
+      "type": "string",
+      "description": "Additional CLI arguments for RFdiffusion"
+    },
+    "backbone_filters": {
+      "type": "string",
+      "description": "Hard filters applied on RFdiffusion backbones in Backbone metrics step, e.g. 'N_contact_hotspots>5,pydssp_helix_percent<50'"
+    },
+    "mpnn_fastrelax_cycles": {
+      "type": "integer",
+      "description": "Number of relax cycles. Each cycle will produce one sequence, plus one for the initial MPNN design",
+      "default": 0
+    },
+    "mpnn_num_sequences": {
+      "type": "integer",
+      "description": "Number of sequences per backbone to generate with ProteinMPNN",
+      "default": 1
+    },
+    "mpnn_run_parameters": {
+      "type": "string",
+      "description": "Additional CLI arguments for ProteinMPNN or FastRelax"
+    },
+    "enable_pyrosetta_ddg": {
+      "type": "boolean",
+      "description": "Enable PyRosetta interface scoring (for binder design)"
+    },
+    "refolding_tests": {
+      "type": "string",
+      "description": "Comma-separated list of refolding tests to perform. Available tests: TODO"
+    },
+    "esmfold_fp16": {
+      "type": "boolean",
+      "description": "Use fp16 precision in ESMFold (faster, less memory, potentially less accurate)"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    },
+    "max_memory": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+.SortableList {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 5px 0;
+  list-style: none;
+  align-items: center;
+  flex-wrap: wrap;
+}

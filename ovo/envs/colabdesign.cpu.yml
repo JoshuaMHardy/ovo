@@ -1,0 +1,12 @@
+channels:
+  - nodefaults
+  - conda-forge
+dependencies:
+  - python = 3.11
+  - cmake
+  - llvm
+  - cxx-compiler
+  - pip
+  - pip:
+      - git+https://github.com/sokrypton/ColabDesign.git@d024c4e846fea83c090afcbe89a313eeee8ec01e
+      - jax==0.6.2

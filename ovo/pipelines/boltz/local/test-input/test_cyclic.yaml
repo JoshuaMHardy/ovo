@@ -1,0 +1,11 @@
+version: 1
+sequences:
+  - protein:
+      id: A
+      sequence: QLEDSEVEAV
+      msa: empty
+      cyclic: true
+  - protein:
+      id: B
+      sequence: QLEDSEVEAVAKGLEEMYANGVTEDNFKNYVKNNFAQQEISSVEEELNVNISDSCVANKIKDEFFAMISISAIVKAAQKKAWKELAVTVLRFAKANGLKTNAIIVAGQLALWAVQCG
+      msa: empty

@@ -1,0 +1,11 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - perl
+  - pip
+  - pip:
+      - biopython==1.85
+      - pandas
+      - numpy

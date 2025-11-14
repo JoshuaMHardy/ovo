@@ -1,0 +1,11 @@
+from ovo import db, get_username
+from ovo.core.database.models import Round
+
+
+def get_or_create_project_rounds(project_id: str) -> dict[str, Round]:
+    project_rounds = db.select(Round, project_id=project_id, order_by="created_date_utc")
+    if not project_rounds:
+        project_round = Round(project_id=project_id, name="Round 1", author=get_username())
+        db.save(project_round)
+        project_rounds = [project_round]
+    return {r.id: r for r in project_rounds}

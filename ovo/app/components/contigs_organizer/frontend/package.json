@@ -1,0 +1,41 @@
+{
+  "name": "contigs_organizer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "pdb-parser-js": "^0.0.5",
+    "react": "^18.0.2",
+    "react-dom": "^18.0.2",
+    "react-full-screen": "^1.1.1",
+    "sass": "^1.77.6",
+    "streamlit-component-lib": "^2.0.0",
+    "uuid": "^11.1.0"
+  },
+  "scripts": {
+    "build": "rm -rf build/ && bun build.js"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "homepage": ".",
+  "devDependencies": {
+    "@types/node": "^12.0.0",
+    "@types/react": "^18.0.2",
+    "@types/react-dom": "^18.0.2",
+    "typescript": "^4.2.0"
+  }
+}

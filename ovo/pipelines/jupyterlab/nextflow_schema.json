@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "JupyterLab",
+  "description": "",
+  "type": "object",
+  "required": ["dirs"],
+  "properties": {
+    "dirs": {
+      "type": "string",
+      "description": "Directories to make accessible inside JupyterLab, separated by commas"
+    },
+    "env": {
+      "type": "string",
+      "description": "Image or conda env to run inside, for example rfdiffusion."
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP address to bind Jupyter server to"
+    },
+    "port": {
+      "type": "integer",
+      "description": "Port number for Jupyter server"
+    },
+    "run_parameters": {
+      "type": "string",
+      "description": "Additional parameters to pass to JupyterLab when starting the server"
+    },
+    "cpus": {
+      "type": "integer",
+      "description": "Number of CPUs to allocate for the JupyterLab server",
+      "default": 4
+    },
+    "memory": {
+      "type": "string",
+      "description": "Amount of memory to allocate for the JupyterLab server (e.g., '32 GB')",
+      "default": "16 GB"
+    }
+  }
+}

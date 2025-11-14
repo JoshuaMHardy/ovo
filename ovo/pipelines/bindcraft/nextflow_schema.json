@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "BindCraft design pipeline",
+  "description": "",
+  "type": "object",
+  "required": [
+    "input_json_path",
+    "settings_advanced",
+    "settings_filters",
+    "time_limit_seconds"
+  ],
+  "properties": {
+    "input_json_path": {
+      "type": "string",
+      "description": "Path to BindCraft input JSON file. Field design_path must be \"output\" and starting_pdb must be \"target.pdb\"."
+    },
+    "input_pdb": {
+      "type": "string",
+      "description": "Path to input PDB (target) file."
+    },
+    "num_replicas": {
+      "type": "integer",
+      "description": "Number of parallel replicas to run (default: 1). Each replica will stop when it reaches time_limit_seconds or when it generates the desired number of accepted designs."
+    },
+    "settings_advanced": {
+      "type": "string",
+      "description": "Path to advanced settings JSON for BindCraft"
+    },
+    "settings_filters": {
+      "type": "string",
+      "description": "Path to filter settings JSON for BindCraft"
+    },
+    "time_limit_seconds": {
+      "type": "integer",
+      "description": "Time limit for the process in seconds (timeout is treated as a success)"
+    },
+    "alphafold_single_model": {
+      "type": "boolean",
+      "description": "Use only one AlphaFold model instead of the default five (use only for testing purposes)"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "ProteinQC protein evaluation",
+  "description": "",
+  "type": "object",
+  "required": ["input_pdb", "tools", "chains"],
+  "properties": {
+    "input_pdb": {
+      "type": "string",
+      "description": "Input PDB file, a folder of PDB files (ending with /) or .txt file containing multiple PDB paths (one per line)"
+    },
+    "tools": {
+      "type": "string",
+      "description": "Comma-separated list of tools to run. Available tools: dssp,esm_1v,esm_if,peppatch,proteinsol,seq_composition"
+    },
+    "chains": {
+      "type": "string",
+      "description": "Comma-separated list of chains to analyze, or use FULL to analyze all chains and/or EACH to analyze each individual chain separately."
+    },
+    "peppatch_config_path": {
+      "type": "string",
+      "description": "Path to pep-patch config file JSON"
+    },
+    "hydrophobicity_scale_path": {
+      "type": "string",
+      "description": "Path to pep-patch hydrophobicity scale file"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    },
+    "reference_files_dir": {
+      "type": "string"
+    },
+    "batch_size": {
+      "type": "integer",
+      "default": 100
+    },
+    "esm_models_path": {
+      "type": "string"
+    },
+    "max_memory": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovo"
+version = "0.0.1"
+description = "OVO: an open-source ecosystem for de novo protein design"
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "numpy",
+    "pandas>=2.2.3",
+    "streamlit>=1.50.0",
+    "authlib",
+    "boto3",
+    "mypy-boto3",
+    "mypy_boto3_s3",
+    "mypy-boto3-omics",
+    "mypy-boto3-stepfunctions",
+    "biopython",
+    "plotly",
+    "streamlit-timeago",
+    "timeago",
+    "sqlalchemy",
+    "appdirs",
+    "streamlit_js_eval",
+    "humanize",
+    "cmap",
+    "biopandas",
+    "nextflow",
+    "psutil",
+    "typer",
+    "rich",
+    "pydantic",
+    "pydantic-settings",
+    "pyyaml",
+    "scipy",
+    "xlsxwriter>=3.2.5",
+    "matplotlib>=3.9.4",
+    "jsonschema",
+    "openpyxl",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "rsconnect",
+    "ruff",
+    "python-dotenv",
+    "watchdog",
+]
+
+[project.scripts]
+ovo = "ovo.cli.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ovo*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "ovo/pipelines"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+target-version = "py311" # target python version for linting
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

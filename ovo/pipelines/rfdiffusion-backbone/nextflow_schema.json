@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": " pipeline parameters",
+  "description": "",
+  "type": "object",
+  "required": ["input_pdb", "contig"],
+  "properties": {
+    "input_pdb": {
+      "type": "string",
+      "description": "Input PDB file for RFdiffusion"
+    },
+    "contig": {
+      "type": "string",
+      "description": "The contig map string to pass to contigmap.contigs, e.g. 'A52-156/0 50-60' for binder design or 'A20-30/10-20/A40-50' for scaffold design"
+    },
+    "num_designs": {
+      "type": "integer",
+      "description": "Number of backbones to generate with RFdiffusion"
+    },
+    "hotspot": {
+      "type": "string",
+      "description": "Binding hotspot for RFdiffusion and downstream evaluation, including chain ids e.g. C123,C124"
+    },
+    "run_parameters": {
+      "type": "string",
+      "description": "Additional CLI arguments for RFdiffusion"
+    },
+    "save_traj": {
+      "type": "boolean",
+      "description": "Save RFdiffusion trajectory PDB files"
+    },
+    "cyclic": {
+      "type": "boolean",
+      "description": "Generate macrocyclic peptide chain"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    },
+    "max_memory": {
+      "type": "string"
+    }
+  }
+}

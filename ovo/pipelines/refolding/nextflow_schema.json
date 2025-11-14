@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "RFdiffusion end-to-end pipeline",
+  "description": "",
+  "type": "object",
+  "required": [
+    "design_type",
+    "tests",
+    "input_designs"
+  ],
+  "properties": {
+    "design_type": {
+      "type": "string",
+      "enum": ["binder", "scaffold"],
+      "description": "Type of the design task"
+    },
+    "tests": {
+      "type": "string",
+      "description": "Comma-separated list of refolding tests to perform. Available tests: TODO"
+    },
+    "input_designs": {
+      "type": "string",
+      "description": "Input PDB file(s) of designs to be evaluated, a folder of PDB files (ending with /) or .txt file containing multiple PDB paths (one per line)"
+    },
+    "native_pdb": {
+      "type": "string",
+      "description": "PDB file with original (native) structure(s) of the designs to be used for native motif RMSD calculation"
+    },
+    "input_references": {
+      "type": "string",
+      "description": "Input directory containing reference PDB files that can be used for example as structure templates"
+    },
+    "batch_size": {
+      "type": "integer",
+      "description": "Number of designs to evaluate in one batch (each batch can run in parallel)",
+      "default": 5
+    },
+    "cyclic": {
+      "type": "boolean",
+      "description": "Evaluate macrocyclic peptide chain"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    },
+    "max_memory": {
+      "type": "string"
+    }
+  }
+}

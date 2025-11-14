@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "Boltz structure prediction",
+  "description": "",
+  "type": "object",
+  "required": [
+      "input_yaml"
+  ],
+  "properties": {
+    "input_yaml": {
+      "type": "string",
+      "description": "Path to input Boltz YAML file or directory containing YAML files"
+    },
+    "input_dir": {
+      "type": "string",
+      "description": "Path to directory with additional files for Boltz like cif templates"
+    },
+    "boltz_version": {
+      "type": "string",
+      "default": "boltz2"
+    },
+    "run_parameters": {
+      "type": "string",
+      "description": "Additional CLI arguments for Boltz"
+    },
+
+    "output_dir": {
+      "type": "string",
+      "description": "Output directory name"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    }
+  }
+}

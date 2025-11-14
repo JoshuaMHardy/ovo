@@ -1,0 +1,391 @@
+import typer
+import os
+from rich.prompt import Prompt, Confirm
+from ovo.cli.common import console, OVOCliError, download_files, init_nextflow
+from ovo.core.configuration import (
+    OVOConfig,
+    ConfigProps,
+    DEFAULT_OVO_HOME,
+    get_source_command,
+    get_shell_config_path,
+    save_global_home_dir,
+    global_config_flag,
+)
+import subprocess
+import shutil
+
+app = typer.Typer(pretty_exceptions_enable=False, help="OVO initialization commands")
+
+RFDIFFUSION_MODEL_FILES = [
+    # URL, local path, hash (SHA256: calculate with "shasum -a 256 my_file" or "sha256sum my_file")
+    (
+        "https://files.ipd.uw.edu/pub/RFdiffusion/6f5902ac237024bdd0c176cb93063dc4/Base_ckpt.pt",
+        "rfdiffusion_models/Base_ckpt.pt",
+        "0fcf7d7c32b4848030aca3a051e6768de194616f96ba6c38186351a33bfc6eca",
+    ),
+    (
+        "https://files.ipd.uw.edu/pub/RFdiffusion/e29311f6f1bf1af907f9ef9f44b8328b/Complex_base_ckpt.pt",
+        "rfdiffusion_models/Complex_base_ckpt.pt",
+        "76e4e260aefee3b582bd76b77ab95d2592e64f00c51bf344968ab9239f3250bc",
+    ),
+    (
+        "https://files.ipd.uw.edu/pub/RFdiffusion/5532d2e1f3a4738decd58b19d633b3c3/ActiveSite_ckpt.pt",
+        "rfdiffusion_models/ActiveSite_ckpt.pt",
+        "beca1f672049161df0bc6a2d2523828f19fd9c8a2b449988e246dde42e7ea986",
+    ),
+]
+
+ALPHAFOLD_MODEL_FILES = [
+    (
+        "https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar",
+        "alphafold_models",
+        "36d4b0220f3c735f3296d301152b738c9776d16981d054845a68a1370b26cfe3",
+    )
+]
+
+ESM1V_MODEL_FILES = [
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm1v_t33_650M_UR90S_1.pt",
+        "esm_models/esm1v_t33_650M_UR90S_1.pt",
+        "9519ee60f1cddad3c101afb1f42612499e188534969c3f682e94850870f70433",
+    ),
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm1v_t33_650M_UR90S_2.pt",
+        "esm_models/esm1v_t33_650M_UR90S_2.pt",
+        "5b7b095e8eafc53ccfe5994b954fb756bfe7a081f22b4caa1ed59b77b90bcf81",
+    ),
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm1v_t33_650M_UR90S_3.pt",
+        "esm_models/esm1v_t33_650M_UR90S_3.pt",
+        "bc5cb2f2a1b35def284e2b2833ae58c803ca9c61b16b72c1dd54c54e76df0b67",
+    ),
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm1v_t33_650M_UR90S_4.pt",
+        "esm_models/esm1v_t33_650M_UR90S_4.pt",
+        "44750a28c09f7ba9e7ccb7aeaba812cbbe90eb2a8a2c658dc5fa165f7090a15a",
+    ),
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm1v_t33_650M_UR90S_5.pt",
+        "esm_models/esm1v_t33_650M_UR90S_5.pt",
+        "69ffd06be29aaaf105eda919f23e5ac4a6872e7907fbf1f087fd942abdb3adf7",
+    ),
+]
+
+ESM_IF_MODEL_FILES = [
+    (
+        "https://dl.fbaipublicfiles.com/fair-esm/models/esm_if1_gvp4_t16_142M_UR50.pt",
+        "esm_models/esm_if1_gvp4_t16_142M_UR50.pt",
+        "be4ba36edec22a9bfaa4946ff6b2815f1f19d8a3d7e0eada8b796d5a0eae9fd4",
+    )
+]
+
+BOLTZ_MODEL_FILES = {
+    (
+        "https://huggingface.co/boltz-community/boltz-1/resolve/main/boltz1_conf.ckpt",
+        "boltz_models/boltz1_conf.ckpt",
+        "fea245d912c570ec117b2277c2719f312a6fc109c07b6f6ef741690ee775c2f5",
+    ),
+    (
+        "https://huggingface.co/boltz-community/boltz-1/resolve/main/ccd.pkl",
+        "boltz_models/ccd.pkl",
+        "2d3b2f03a3c5665944adba51e33263511e51b21c9cd05d902f9c4b7c1e58d2f4",
+    ),
+}
+
+
+@app.command()
+def home(
+    home_dir: str | None = typer.Argument(None, help="OVO home directory"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Confirm all without prompting"),
+    no_env: bool = typer.Option(False, "--no-env", help="Do not set OVO_HOME in shell .bashrc/.zshrc file"),
+    default_profile: str = typer.Option(
+        "conda", "--profile", help="Default nextflow profile to use in default scheduler"
+    ),
+):
+    """Initialize the OVO home directory"""
+
+    console.print("[bold]OVO initialization[/bold]")
+
+    if home_dir is None:
+        console.print("""
+[bold]Select OVO_HOME[/bold]
+
+This directory will contain all OVO files:
+
+- [bold]config.yml[/bold][gray]______[/gray]configuration file
+- [bold]ovo.db[/bold][gray]__________[/gray]SQLite database (stored as a single file)
+- [bold]workdir[/bold][gray]_________[/gray]Working directory for Nextflow workflows
+- [bold]storage[/bold][gray]_________[/gray]PDB design files and other permanent results
+- [bold]reference_files[/bold][gray]_[/gray]Downloaded model weights and other reference files
+
+All paths can be customized later in the [bold]config.yml[/bold] file.
+""")
+        home_dir = yes or Prompt.ask(
+            prompt="Enter path, or press [bold]Enter[/bold] to select the default", default=DEFAULT_OVO_HOME
+        )
+
+    home_dir = os.path.abspath(os.path.expanduser(home_dir))
+
+    config_path = os.path.join(home_dir, "config.yml")
+
+    if os.path.exists(home_dir):
+        raise OVOCliError(f"Home directory already exists: {home_dir}")
+
+    if not yes and not Confirm.ask(f"Confirm directory: [bold]{home_dir}[/bold]"):
+        console.print("Aborted")
+        raise typer.Exit()
+
+    config_props = ConfigProps()
+    config_props.pyrosetta_license = yes or Confirm.ask(
+        "Enable fastrelax? In case of commercial use, this requires a PyRosetta license"
+    )
+
+    # ask about using conda when docker is not on PATH
+    if not shutil.which("conda") and "conda" in default_profile:
+        raise OVOCliError(
+            "Conda not found on PATH, please install conda or use --profile to specify the default scheduler profile (docker, singularity, apptainer, ...)"
+        )
+
+    os.makedirs(home_dir, exist_ok=True)
+
+    with open(config_path, "w") as f:
+        f.write(OVOConfig.default(props=config_props, default_profile=default_profile))
+
+    with open(os.path.join(home_dir, "nextflow_local.config"), "w") as f:
+        f.write(OVOConfig.default_nextflow_config())
+
+    console.print(f"\n[green]✔[/green] Initialized OVO config: [bold]{config_path}[/bold]")
+
+    if home_dir != DEFAULT_OVO_HOME and not no_env:
+        export_command = f'export OVO_HOME="{home_dir}"'
+        # Detect shell and determine config file
+        shell_config_path = get_shell_config_path()
+        console.print("\nWould you like to remember the ovo home dir?")
+        console.print("- 0: Do not remember, will manage OVO_HOME env var myself")
+        console.print(f"- 1: Use this home dir for this installation of OVO (creates {global_config_flag})")
+        console.print(
+            f"- 2: Use this home dir for myself (append the env var to my shell config at {shell_config_path})"
+        )
+
+        choice = Prompt.ask("Select an option", choices=["0", "1", "2"])
+
+        if choice == "0":
+            console.print("\nPlease set this environment variable manually:")
+            console.print(f"[bold green]{export_command}[/bold green]")
+        elif choice == "1":
+            save_global_home_dir(home_dir)
+            console.print("[bold]Saved global home directory for this installation of OVO[/bold]")
+        elif choice == "2":
+            if not shell_config_path:
+                console.print(
+                    "\n[red]Could not detect your shell config file (e.g. .bashrc or .zshrc). "
+                    "You will need to set the OVO_HOME environment variable manually:[/red]"
+                )
+                console.print(f"[bold green]{export_command}[/bold green]")
+            else:
+                with open(shell_config_path, "a") as f:
+                    f.write(f"\n{export_command}")
+                console.print(f"\n✔ Added to {shell_config_path}. Restart your terminal or run:")
+                console.print(get_source_command())
+
+    console.print("\nNext step: Initialize the preview workflow using [bold]ovo init preview[/bold]")
+
+
+@app.command()
+def preview():
+    """Initialize nextflow, reference files and environment for the RFdiffusion preview workflow"""
+    from ovo import config, local_scheduler
+
+    # Initialize nextflow
+    console.print("[bold]Initializing nextflow...[/bold]")
+    init_nextflow()
+    console.print("[bold][green]✔[/green] Nextflow initialized successfully[/bold]")
+
+    # Download RFdiffusion base model weights
+    download_files(destination_dir=config.reference_files_dir, file_list=RFDIFFUSION_MODEL_FILES)
+
+    # Submit RFdiffusion preview (which also initializes the RFdiffusion conda environment)
+    ovo_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources"))
+    process, job_id = local_scheduler.submit(
+        "rfdiffusion-backbone",
+        params={
+            "contig": "A82-87/10/A92-97",
+            "input_pdb": os.path.join(ovo_resources_path, "examples/inputs/5ELI_A.pdb"),
+            "num_designs": 1,
+            "run_parameters": "diffuser.T=2",
+        },
+        submission_args=dict(sync=True),
+    )
+    process.wait()
+    if process.returncode == 0:
+        console.print("[bold][green]✔[/green] RFdiffusion preview completed successfully[/bold]")
+        console.print("Example unconditional design output saved to:")
+        console.print(local_scheduler.get_output_dir(job_id))
+    else:
+        console.print("RFdiffusion workflow [red]FAILED[/red], please see errors above")
+        exit(process.returncode)
+
+    console.print("\nNext step: Set up end-to-end RFdiffusion workflow using [bold]ovo init rfdiffusion[/bold]")
+    console.print("           Or already explore OVO web app using [bold]ovo app[/bold]")
+
+
+@app.command()
+def rfdiffusion(scheduler: str = None):
+    """Initialize nextflow, reference files and environment for the RFdiffusion end-to-end workflow"""
+    from ovo import config, get_scheduler
+
+    # Initialize nextflow
+    init_nextflow()
+
+    # Download RFdiffusion base model weights
+    download_files(destination_dir=config.reference_files_dir, file_list=RFDIFFUSION_MODEL_FILES)
+
+    # Download AlphaFold weights
+    download_files(destination_dir=config.reference_files_dir, file_list=ALPHAFOLD_MODEL_FILES)
+
+    scheduler = get_scheduler(scheduler_key=scheduler or config.default_scheduler)
+
+    # Submit RFdiffusion scaffold end-to-end workflows
+    ovo_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources"))
+    process, job_id = scheduler.submit(
+        "rfdiffusion-end-to-end",
+        params={
+            "rfdiffusion_contig": "A82-87/10/A92-97",
+            "rfdiffusion_input_pdb": os.path.join(ovo_resources_path, "examples/inputs/5ELI_A.pdb"),
+            "rfdiffusion_num_designs": 1,
+            "rfdiffusion_run_parameters": "diffuser.T=2",
+            "mpnn_num_sequences": 2,
+            "design_type": "scaffold",
+            "refolding_tests": "af2_model_1_ptm_ft_1rec",
+        },
+        submission_args=dict(sync=True),
+    )
+    process.wait()
+    if process.returncode == 0:
+        console.print("[bold][green]✔[/green] RFdiffusion scaffold preview completed successfully[/bold]")
+        console.print("Example scaffold design output saved to:")
+        console.print(scheduler.get_output_dir(job_id))
+    else:
+        console.print("RFdiffusion workflow [red]FAILED[/red], please see errors above")
+        exit(process.returncode)
+
+    # Submit RFdiffusion binder end-to-end workflow with LigandMPNN
+    process, job_id = scheduler.submit(
+        "rfdiffusion-end-to-end",
+        params={
+            "rfdiffusion_contig": "A20-130/0 10",
+            "rfdiffusion_input_pdb": os.path.join(ovo_resources_path, "examples/inputs/5ELI_A.pdb"),
+            "rfdiffusion_num_designs": 1,
+            "rfdiffusion_run_parameters": "diffuser.T=15",
+            "mpnn_num_sequences": 2,
+            "mpnn_fastrelax_cycles": 0,
+            "enable_pyrosetta_ddg": config.props.pyrosetta_license,
+            "design_type": "binder",
+            "refolding_tests": "af2_model_1_multimer_tt_3rec",
+        },
+        submission_args=dict(sync=True),
+    )
+    process.wait()
+    if process.returncode == 0:
+        console.print("[bold][green]✔[/green] RFdiffusion binder preview completed successfully[/bold]")
+        console.print("Example binder design output saved to:")
+        console.print(scheduler.get_output_dir(job_id))
+    else:
+        console.print("RFdiffusion workflow [red]FAILED[/red], please see errors above")
+        exit(process.returncode)
+
+    if config.props.pyrosetta_license:
+        # Submit RFdiffusion binder end-to-end workflow with LigandMPNN
+        process, job_id = scheduler.submit(
+            "rfdiffusion-end-to-end",
+            params={
+                "rfdiffusion_contig": "A20-130/0 10",
+                "rfdiffusion_input_pdb": os.path.join(ovo_resources_path, "examples/inputs/5ELI_A.pdb"),
+                "rfdiffusion_num_designs": 1,
+                "rfdiffusion_run_parameters": "diffuser.T=15",
+                "mpnn_fastrelax_cycles": 1,
+                "enable_pyrosetta_ddg": True,
+                "design_type": "binder",
+                "refolding_tests": "af2_model_1_multimer_tt_3rec",
+            },
+            submission_args=dict(sync=True),
+        )
+        process.wait()
+        if process.returncode == 0:
+            console.print("[bold][green]✔[/green] RFdiffusion binder preview completed successfully[/bold]")
+            console.print("Example binder design output saved to:")
+            console.print(scheduler.get_output_dir(job_id))
+        else:
+            console.print("RFdiffusion workflow [red]FAILED[/red], please see errors above")
+            exit(process.returncode)
+
+    console.print("\nNext step: Run OVO web app using [bold]ovo app[/bold]")
+
+
+@app.command()
+def proteinqc(
+    tool_keys: str = typer.Option(
+        "all",
+        "--tools",
+        help="Comma-separated list of ProteinQC tools to use, or 'all' to use all available tools (supported by the scheduler)",
+    ),
+    scheduler: str = None,
+):
+    """Initialize nextflow, reference files and environment for the ProteinQC workflow"""
+    from ovo import config, get_scheduler
+    from ovo.core.database.models_proteinqc import PROTEINQC_TOOLS, ESM_1V, ESM_IF
+    from ovo.core.logic.proteinqc_logic import get_available_tools
+
+    # Initialize nextflow
+    init_nextflow()
+
+    scheduler = get_scheduler(scheduler_key=scheduler or config.default_scheduler)
+
+    if tool_keys != "all":
+        tool_keys = tool_keys.split(",")
+        all_tools_by_key = {tool.tool_key: tool for tool in PROTEINQC_TOOLS}
+        tools = []
+        for key in tool_keys:
+            if key not in all_tools_by_key:
+                raise OVOCliError(
+                    f"Invalid ProteinQC tool '{key}', available tools: {','.join(all_tools_by_key.keys())}"
+                )
+            tools.append(all_tools_by_key[key])
+    else:
+        tools = get_available_tools(PROTEINQC_TOOLS, scheduler)
+        tool_keys = [tool.tool_key for tool in tools]
+
+    # Download ESM1v weights
+    if ESM_1V in tools:
+        download_files(destination_dir=config.reference_files_dir, file_list=ESM1V_MODEL_FILES)
+
+    # Download ESM-IF weights
+    if ESM_IF in tools:
+        download_files(destination_dir=config.reference_files_dir, file_list=ESM_IF_MODEL_FILES)
+
+    # Submit ProteinQC workflow
+    ovo_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources"))
+    input_path = os.path.join(ovo_resources_path, "examples/inputs/5ELI_A.pdb")
+
+    chains = ["A"]
+    process, job_id = scheduler.submit(
+        "proteinqc",
+        params={
+            "input_pdb": input_path,
+            "tools": ",".join(tool_keys),
+            "chains": ",".join(chains),
+        },
+        submission_args=dict(sync=True),
+    )
+    process.wait()
+    if process.returncode == 0:
+        console.print("[bold][green]✔[/green] ProteinQC completed successfully[/bold]")
+        console.print("Example ProteinQC output saved to:")
+        console.print(scheduler.get_output_dir(job_id))
+    else:
+        console.print("ProteinQC workflow [red]FAILED[/red], please see errors above")
+        exit(process.returncode)
+
+
+if __name__ == "__main__":
+    app()

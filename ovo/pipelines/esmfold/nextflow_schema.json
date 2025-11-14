@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": " pipeline parameters",
+  "description": "",
+  "type": "object",
+  "required": [
+      "input_path"
+  ],
+  "properties": {
+    "input_path": {
+      "type": "string",
+      "description": "Path to input FASTA, PDB, or directory containing FASTA or PDB files"
+    },
+    "fp16": {
+      "type": "boolean",
+      "description": "Use fp16 precision (faster, less memory, potentially less accurate)"
+    },
+    "num_recycles": {
+      "type": "integer",
+      "default": 4,
+      "description": "Number of ESMFold recycling iterations"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "Output directory name"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    },
+    "reference_files_dir": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+channels:
+  - nodefaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - biopython
+      - torch==2.4.1
+      - transformers==4.45.1

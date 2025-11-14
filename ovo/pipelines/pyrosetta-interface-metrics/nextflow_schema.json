@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+  "title": "PyRosetta Interface Metrics",
+  "description": "",
+  "type": "object",
+  "required": ["pdb_dir"],
+  "properties": {
+    "pdb_dir": {
+      "type": "string",
+      "description": "Directory containing PDB files to evaluate"
+    },
+    "cyclic": {
+      "type": "boolean",
+      "description": "Evaluate as macrocyclic peptide chain"
+    },
+    "publish_dir": {
+      "type": "string"
+    },
+    "docker_repository": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+[server]
+folderWatchList = ["ovo"]
+
+[logger]
+enableRich = false
