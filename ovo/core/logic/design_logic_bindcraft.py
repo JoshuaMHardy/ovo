@@ -5,17 +5,14 @@ from typing import Callable
 
 import pandas as pd
 
-from ovo import Scheduler, storage, Pool, Round, db, get_scheduler
+from ovo import storage, Pool, Round, db, get_scheduler
 from ovo.core.database import DesignJob, DesignSpec, Design
 from ovo.core.database.models_bindcraft import BindCraftBinderDesignWorkflow
 from ovo.app.utils.bindcraft_utils import load_json_from_file, merge_dictionaries
 from ovo.core.logic.descriptor_logic import read_descriptor_file_values, save_descriptor_job_for_design_job
 
 
-def submit_workflow(workflow: BindCraftBinderDesignWorkflow, scheduler: Scheduler, pipeline_name: str = None) -> str:
-    # Validate workflow params
-    workflow.validate()
-
+def prepare_bindcraft_params(workflow: BindCraftBinderDesignWorkflow, workdir: str) -> dict:
     input_dict = {
         "design_path": "output",
         "starting_pdb": "target.pdb",
@@ -35,31 +32,26 @@ def submit_workflow(workflow: BindCraftBinderDesignWorkflow, scheduler: Schedule
         load_json_from_file(settings_filters), workflow.bindcraft_params.custom_filter_settings
     )
 
-    return scheduler.submit(
-        pipeline_name="bindcraft",
-        params={
-            "time_limit_seconds": workflow.bindcraft_params.time_limit_hours * 3600,
-            "input_pdb": storage.prepare_workflow_input(
-                workflow.bindcraft_params.input_pdb_path, workdir=scheduler.workdir
-            ),
-            "input_json_path": storage.prepare_workflow_input(
-                "input.json",
-                workdir=scheduler.workdir,
-                input_bytes=json.dumps(input_dict).encode("utf-8"),
-            ),
-            "settings_advanced": storage.prepare_workflow_input(
-                "settings_advanced.json",
-                workdir=scheduler.workdir,
-                input_bytes=json.dumps(merged_advanced_dict, indent=2).encode("utf-8"),
-            ),
-            "settings_filters": storage.prepare_workflow_input(
-                "settings_filters.json",
-                workdir=scheduler.workdir,
-                input_bytes=json.dumps(merged_filter_dict, indent=2).encode("utf-8"),
-            ),
-            "num_replicas": workflow.bindcraft_params.num_replicas,
-        },
-    )
+    return {
+        "time_limit_seconds": workflow.bindcraft_params.time_limit_hours * 3600,
+        "input_pdb": storage.prepare_workflow_input(workflow.bindcraft_params.input_pdb_path, workdir=workdir),
+        "input_json_path": storage.prepare_workflow_input(
+            "input.json",
+            workdir=workdir,
+            input_bytes=json.dumps(input_dict).encode("utf-8"),
+        ),
+        "settings_advanced": storage.prepare_workflow_input(
+            "settings_advanced.json",
+            workdir=workdir,
+            input_bytes=json.dumps(merged_advanced_dict, indent=2).encode("utf-8"),
+        ),
+        "settings_filters": storage.prepare_workflow_input(
+            "settings_filters.json",
+            workdir=workdir,
+            input_bytes=json.dumps(merged_filter_dict, indent=2).encode("utf-8"),
+        ),
+        "num_replicas": workflow.bindcraft_params.num_replicas,
+    }
 
 
 def process_workflow_results(job: DesignJob, callback: Callable = None):
@@ -90,8 +82,10 @@ def process_workflow_results(job: DesignJob, callback: Callable = None):
             ),
         ).drop(columns=["Rank"])
         if missing_designs := set(final_designs["Design"]).difference(accepted_designs):
-            raise FileNotFoundError(f"Unexpected error: Missing files for accepted designs: {missing_designs}, "
-                                    f"found only {accepted_designs} in {accepted_dir}")
+            raise FileNotFoundError(
+                f"Unexpected error: Missing files for accepted designs: {missing_designs}, "
+                f"found only {accepted_designs} in {accepted_dir}"
+            )
 
         rejected_dir = os.path.join(source_output_path, f"{batch_dir}/bindcraft/Rejected")
         rejected_filenames = [filename for filename in storage.list_dir(rejected_dir) if filename.endswith(".pdb")]

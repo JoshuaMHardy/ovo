@@ -30,8 +30,8 @@ class RFdiffusionParams(WorkflowParams):
     hotspots: str | None = None
     # model_weights
     model_weights: str | None = None
-    # number of denoising iterations
-    iterations: int = 50
+    # number of denoising timesteps
+    timesteps: int = 50
     # use partial diffusion
     partial_diffusion: bool = False
     # number of backbone designs to generate
@@ -264,10 +264,13 @@ class RFdiffusionWorkflow(DesignWorkflow, RefoldingSupportedDesignWorkflow):
             )
         return message
 
-    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
-        from ovo.core.logic.design_logic_rfdiffusion import submit_rfdiffusion_workflow
+    def get_pipeline_name(self) -> str:
+        return "ovo.rfdiffusion-end-to-end"
 
-        return submit_rfdiffusion_workflow(self, scheduler, pipeline_name=pipeline_name)
+    def prepare_params(self, workdir: str) -> dict:
+        from ovo.core.logic.design_logic_rfdiffusion import prepare_rfdiffusion_workflow_params
+
+        return prepare_rfdiffusion_workflow_params(self, workdir=workdir)
 
     def process_results(self, job: "DesignJob", callback: Callable = None):
         """Process results of a successful workflow - download files from workdir, save DesignJob, Pool and Designs"""
@@ -278,7 +281,7 @@ class RFdiffusionWorkflow(DesignWorkflow, RefoldingSupportedDesignWorkflow):
     @classmethod
     def get_download_fields(cls):
         return {
-            "Input PDB": (RFdiffusionWorkflow, "rfdiffusion_params.input_pdb_paths"),
+            "RFdiffusion Input PDB": (RFdiffusionWorkflow, "rfdiffusion_params.input_pdb_paths"),
         }
 
     def get_refolding_design_paths(self, design_ids: list[str]) -> list[str]:
@@ -295,10 +298,10 @@ class RFdiffusionScaffoldDesignWorkflow(RFdiffusionWorkflow):
     # acceptance threshold values (descriptor key -> interval (min, max, enabled))
     acceptance_thresholds: dict[str, Threshold] = field(
         default_factory=lambda: {
-            descriptors_refolding.AF2_DEFAULT_PAE.key: Threshold(max_value=10.0, enabled=True),
-            descriptors_refolding.AF2_DEFAULT_DESIGN_RMSD.key: Threshold(max_value=5.0, enabled=True),
-            descriptors_refolding.AF2_DEFAULT_NATIVE_MOTIF_RMSD.key: Threshold(max_value=3.0, enabled=True),
-            descriptors_refolding.AF2_DEFAULT_PLDDT.key: Threshold(min_value=80, enabled=False),
+            descriptors_refolding.AF2_PRIMARY_PAE.key: Threshold(max_value=5.0),
+            descriptors_refolding.AF2_PRIMARY_DESIGN_RMSD.key: Threshold(max_value=2.0),
+            descriptors_refolding.AF2_PRIMARY_NATIVE_MOTIF_RMSD.key: Threshold(max_value=2.0),
+            descriptors_refolding.AF2_PRIMARY_PLDDT.key: Threshold(min_value=80),
             descriptors_refolding.ESMFOLD_PAE.key: Threshold(max_value=10.0, enabled=False),
             descriptors_refolding.ESMFOLD_DESIGN_BACKBONE_RMSD.key: Threshold(max_value=5.0, enabled=False),
             descriptors_refolding.ESMFOLD_PLDDT.key: Threshold(min_value=80, enabled=False),
@@ -344,11 +347,12 @@ class RFdiffusionBinderDesignWorkflow(RFdiffusionWorkflow):
     # acceptance threshold values (descriptor key -> interval (min, max, enabled))
     acceptance_thresholds: dict[str, Threshold] = field(
         default_factory=lambda: {
-            descriptors_refolding.AF2_DEFAULT_IPAE.key: Threshold(max_value=10.0, enabled=True),
-            descriptors_refolding.AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD.key: Threshold(max_value=5.0, enabled=True),
+            descriptors_refolding.AF2_PRIMARY_IPAE.key: Threshold(max_value=10.0),
+            descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.key: Threshold(max_value=2.0),
+            descriptors_refolding.AF2_PRIMARY_PLDDT_BINDER.key: Threshold(min_value=80),
+            descriptors_rfdiffusion.PYROSETTA_DDG.key: Threshold(max_value=-20.0),
             descriptors_rfdiffusion.N_CONTACTS_TO_HOTSPOTS.key: Threshold(min_value=1, enabled=False),
-            descriptors_rfdiffusion.PYROSETTA_DDG.key: Threshold(max_value=-20.0, enabled=True),
-            descriptors_refolding.AF2_DEFAULT_PLDDT_BINDER.key: Threshold(min_value=80, enabled=False),
+            descriptors_refolding.AF2_PRIMARY_BINDER_PAE.key: Threshold(max_value=5.0, enabled=False),
             descriptors_rfdiffusion.PYROSETTA_CMS.key: Threshold(enabled=False),
             descriptors_rfdiffusion.PYROSETTA_SAP_SCORE.key: Threshold(enabled=False),
             descriptors_rfdiffusion.RADIUS_OF_GYRATION.key: Threshold(enabled=False),

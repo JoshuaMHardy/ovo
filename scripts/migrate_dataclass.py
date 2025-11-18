@@ -13,6 +13,9 @@ import os
 #   echo -e "def migrate(data):\n  data.pop('queued')\n\nrun(migrate)" | python -i scripts/migrate_dataclass.py DescriptorJob job_status
 
 
+os.environ["OVO_STRICT_JSON"] = "1"  # raise exception when parsing fails
+
+
 def get_all_annotations(cls):
     annotations = {}
     for base in cls.__mro__:  # Traverse the class hierarchy
@@ -60,7 +63,6 @@ def run(migrate_func=None, dry=False, all=False):
     # dict object_id -> update data dict
     num_updated = 0
     object_ids = db.select_unique_values(Model, "id")
-    os.environ["OVO_STRICT_JSON"] = "1"  # raise exception when parsing fails
     for object_id in object_ids:
         try:
             db.get(Model, object_id)

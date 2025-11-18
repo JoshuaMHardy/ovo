@@ -21,7 +21,7 @@ def test_scaffold_end_to_end_logic(project_data):
             input_pdb_paths=[RESOURCES_DIR / "examples/inputs/5ELI_A.pdb"],
             contigs=["A111-114/10/A117-119"],
             num_designs=1,
-            iterations=1,  # use 1 diffusion iteration for faster testing
+            timesteps=1,  # use 1 diffusion iteration for faster testing
         ),
         protein_mpnn_params=ProteinMPNNParams(
             num_sequence_designs=2,
@@ -62,10 +62,10 @@ def test_scaffold_end_to_end_logic(project_data):
     assert len(rag) == 2
     assert (rag > 0).all()
 
-    af2_plddt = db.select_descriptor_values(descriptors_refolding.AF2_DEFAULT_PLDDT.key, design_ids)
+    af2_plddt = db.select_descriptor_values(descriptors_refolding.AF2_PRIMARY_PLDDT.key, design_ids)
     assert len(af2_plddt) == 2
     assert (af2_plddt > 10).all()
 
-    design_rmsd = db.select_descriptor_values(descriptors_refolding.AF2_DEFAULT_DESIGN_RMSD.key, design_ids)
+    design_rmsd = db.select_descriptor_values(descriptors_refolding.AF2_PRIMARY_DESIGN_RMSD.key, design_ids)
     assert len(design_rmsd) == 2
     assert (design_rmsd < 20).all()

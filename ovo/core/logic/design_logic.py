@@ -1,5 +1,6 @@
 import io
 import sys
+import traceback
 
 from copy import deepcopy
 from datetime import datetime
@@ -55,7 +56,7 @@ def get_design_jobs_table(
                 ("Pool", "id"): pool.id,
                 ("Pool", "name"): pool.name,
                 ("Pool", "description"): pool.description,
-                ("Job", "status"): format_pool_status(job, pool.processed),
+                ("Job", "status"): format_pool_status(job, pool.processed, update_status=update),
                 ("Job", "duration"): format_job_duration(job),
                 ("Job", "created"): naturaltime(job.created_date_utc, when=datetime.utcnow()),
                 ("Designs", "accepted"): accepted_by_pool.get(pool.id, 0) if pool.processed else None,
@@ -118,7 +119,7 @@ def get_pools_table(project_id: str = None, round_ids: list[str] = None):
     return df
 
 
-def format_pool_status(job: DesignJob, processed: bool):
+def format_pool_status(job: DesignJob, processed: bool, update_status: bool = True):
     job_result = job.job_result
     if processed == True and job_result is None:
         return None
@@ -126,8 +127,15 @@ def format_pool_status(job: DesignJob, processed: bool):
         return "✅ Ready" if not processed else "Done"
     elif job_result == False:
         return "Failed"
-    scheduler = get_scheduler(job.scheduler_key)
-    return f"⏳{scheduler.get_status_label(job.job_id)}"
+    if update_status:
+        # Get status label from scheduler
+        try:
+            scheduler = get_scheduler(job.scheduler_key)
+        except:
+            traceback.print_exc()
+            return "Unknown Scheduler"
+        return f"⏳{scheduler.get_status_label(job.job_id)}"
+    return "In progress"
 
 
 def get_workflows_table(jobs: list[DesignJob]):
@@ -156,7 +164,7 @@ def submit_design_workflow(
     :param pool_name: Name of the Pool to create
     :param pool_description: Description of the Pool to create
     :param return_existing: If a Pool with the same name and parameters already exists in this round, return it instead of raising an error
-    :param pipeline_name: Optional pipeline name to use, e.g. ovo.rfdiffusion-end-to-end or a github url with @version
+    :param pipeline_name: Override the pipeline name to submit, e.g. ovo.rfdiffusion-end-to-end or a github url with @version
     :return: Tuple of (DesignJob, Pool)
     """
     if existing_pools := db.select(Pool, name=pool_name, round_id=round_id):
@@ -184,13 +192,16 @@ def submit_design_workflow(
     # when users modify workflow params in place and resubmit
     workflow = deepcopy(workflow)
 
+    workflow.validate()
+
     username = get_username()
 
     scheduler = get_scheduler(scheduler_key)
 
-    workflow.validate()
-
-    job_id = workflow.submit(scheduler, pipeline_name=pipeline_name)
+    job_id = scheduler.submit(
+        pipeline_name=pipeline_name or workflow.get_pipeline_name(),
+        params=workflow.prepare_params(workdir=scheduler.workdir),
+    )
 
     design_job = DesignJob(
         workflow=workflow,

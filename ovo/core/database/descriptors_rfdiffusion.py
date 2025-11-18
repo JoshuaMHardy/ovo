@@ -182,8 +182,8 @@ FASTRELAX_STRUCTURE_PATH = StructureFileDescriptor(
 # sap_score: 0.0,
 
 PYROSETTA_DDG = NumericGlobalDescriptor(
-    name="PyRosetta ddG",
-    description="PyRosetta binding energy change (in Rosetta energy units). Lower (negative) values indicate better binding affinity.",
+    name="Rosetta ddG",
+    description="Rosetta binding energy change (in Rosetta energy units, beta_nov16 scoring function). Lower (negative) values indicate better binding affinity.",
     tool="PyRosetta",
     key="pyrosetta_interface_metrics|pyrosetta|ddg",
     comparison="lower_is_better",
@@ -191,7 +191,7 @@ PYROSETTA_DDG = NumericGlobalDescriptor(
 
 PYROSETTA_CMS = NumericGlobalDescriptor(
     name="Contact molecular surface",
-    description="PyRosetta molecular surface area (in Angstrom squared)",
+    description="Contact molecular surface area (in Angstrom squared) calculated using Rosetta ContactMolecularSurface",
     unit="Å²",
     tool="PyRosetta",
     key="pyrosetta_interface_metrics|pyrosetta|contact_molecular_surface",
@@ -200,7 +200,7 @@ PYROSETTA_CMS = NumericGlobalDescriptor(
 
 PYROSETTA_SAP_SCORE = NumericGlobalDescriptor(
     name="Spatial aggregation propensity (SAP)",
-    description="Evaluates hydrophobicity of surface exposed regions. Positive values indicate hydrophobic molecules.",
+    description="Hydrophobicity of surface exposed regions calculated using Rosetta SapScore. Positive values indicate hydrophobic molecules.",
     tool="PyRosetta",
     key="pyrosetta_interface_metrics|pyrosetta|sap_score",
     comparison="does_not_apply",
@@ -212,7 +212,7 @@ DESCRIPTORS = [v for v in globals().values() if isinstance(v, Descriptor)]
 
 PRESETS = [
     {
-        "label": "PyRosetta ddG & CMS",
+        "label": "Rosetta ddG & CMS",
         "x": PYROSETTA_DDG,
         "y": PYROSETTA_CMS,
     },

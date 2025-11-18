@@ -13,11 +13,12 @@ import sys
 
 
 class SqlDBEngine(CacheClearingEngine):
-    def __init__(self, db_url: str, verbose: bool = False):
+    def __init__(self, db_url: str, verbose: bool = False, read_only: bool = False):
         if verbose:
             print("Connecting to", db_url, file=sys.stderr)
         self._db_url = db_url
         self._engine = create_engine(db_url, echo=verbose)
+        self._read_only = read_only
         self._in_clause_items_limit = None
         if self._db_url.startswith("sqlite://"):
             # Sqlite IN clause is limited to 250k items (as of 2025)
@@ -41,7 +42,12 @@ class SqlDBEngine(CacheClearingEngine):
                 if value.is_changed_hash():
                     flag_modified(obj, field)
 
+    def check_read_only(self):
+        if self._read_only:
+            raise RuntimeError("Ovo is running in read-only mode, write operations are not allowed.")
+
     def save(self, obj: Base):
+        self.check_read_only()
         super().save(obj)
         with self._create_session() as session:
             self._check_updated(obj)
@@ -49,6 +55,7 @@ class SqlDBEngine(CacheClearingEngine):
             session.commit()
 
     def save_all(self, objs: Sequence[Base]):
+        self.check_read_only()
         super().save_all(objs)
         with self._create_session() as session:
             for obj in objs:
@@ -57,6 +64,7 @@ class SqlDBEngine(CacheClearingEngine):
             session.commit()
 
     def remove(self, model: Type[T], *id_args, **kwargs):
+        self.check_read_only()
         super().remove(model, *id_args, **kwargs)
         assert id_args or kwargs, "At least one filter must be provided for remove operation"
         with self._create_session() as session:
@@ -64,6 +72,7 @@ class SqlDBEngine(CacheClearingEngine):
             session.commit()
 
     def save_value(self, model: Type[T], column: str, value, **kwargs):
+        self.check_read_only()
         super().save_value(model, column, value, **kwargs)
         assert kwargs, "At least one filter must be provided for save_value operation"
         with self._create_session() as session:

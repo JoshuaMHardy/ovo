@@ -4,18 +4,23 @@ from ovo import db, get_username
 from ovo.core.database.models import Project, Round
 
 
-PERSONAL_PROJECT_NAME = "Personal project"
+PERSONAL_PROJECT_NAME = "Personal project: {author}"
 
 
 def get_or_create_personal_project() -> Project:
-    return get_or_create_project(PERSONAL_PROJECT_NAME, public=False, filters=dict(author=get_username()))
+    author = get_username()
+    return get_or_create_project(
+        PERSONAL_PROJECT_NAME.format(author=author),
+        public=False,
+        filters=dict(public=False, author=author),
+    )
 
 
 def get_or_create_project(project_name: str, public=False, filters=None) -> Project:
     """Get or create a project by name."""
     author = get_username()
     try:
-        return db.get(Project, name=project_name, public=public, **(filters or {}))
+        return db.get(Project, name=project_name, **(filters or {}))
     except NoResultFound:
         project = Project(name=project_name, public=public, author=author)
         db.save(project)

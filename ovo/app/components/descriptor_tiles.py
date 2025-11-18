@@ -6,13 +6,14 @@ from collections import Counter
 
 
 from ovo.app.components import molstar_custom_component, StructureVisualization
+from ovo.app.components.custom_elements import wrapped_columns
 from ovo.core.database import descriptors_rfdiffusion
 from ovo.core.database.descriptors_proteinqc import (
     PROTEINQC_SEQUENCE_DESCRIPTORS,
     PROTEINQC_STRUCTURE_DESCRIPTORS,
     ESMFOLD_DESCRIPTORS,
     PEP_PATCH_HYDROPHOBICITY_DESCRIPTORS_BY_KEY,
-    AF2_DEFAULT_DESCRIPTORS,
+    AF2_PRIMARY_DESCRIPTORS,
 )
 from ovo.core.database.models import Descriptor
 from ovo.core.logic.proteinqc_logic import get_descriptor_plot_setting
@@ -44,7 +45,7 @@ def descriptor_overview_tiles(descriptors_df: pd.DataFrame, descriptors_by_key: 
     descriptor_tiles(descriptors_df, PROTEINQC_STRUCTURE_DESCRIPTORS)
 
     # AF2 initial guess
-    af_descriptors = [descriptor for descriptor in AF2_DEFAULT_DESCRIPTORS if descriptor.key in descriptors_by_key]
+    af_descriptors = [descriptor for descriptor in AF2_PRIMARY_DESCRIPTORS if descriptor.key in descriptors_by_key]
     if af_descriptors:
         st.subheader("Refolding test: AlphaFold2 initial guess")
         descriptor_tiles(descriptors_df, af_descriptors)
@@ -318,12 +319,10 @@ def write_tile_title(descriptor: Descriptor, descriptor_values: pd.Series):
 
 
 def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]):
-    N_COLS_ROW = min(3, len(descriptors))
-    cols = st.columns(N_COLS_ROW)
-    for i, descriptor in enumerate(descriptors):
-        col_idx = i % N_COLS_ROW
-        with cols[col_idx]:
-            with st.container(border=True, height=400):
+    columns = wrapped_columns(len(descriptors), wrap=3, gap="medium")
+    for col, descriptor in zip(columns, descriptors):
+        with col:
+            with st.container(border=True, height="stretch"):
                 if (descriptor.tool, descriptor.name) not in descriptors_df.columns:
                     st.markdown(f"#### {descriptor.name}", help=descriptor.description)
                     st.warning("Not available")

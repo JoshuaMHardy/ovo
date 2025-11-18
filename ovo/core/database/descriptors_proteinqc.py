@@ -1,5 +1,5 @@
 from ovo.core.database import descriptors_rfdiffusion
-from ovo.core.database.descriptors_refolding import AF2_DEFAULT_DESCRIPTORS, ESMFOLD_DESCRIPTORS
+from ovo.core.database.descriptors_refolding import AF2_PRIMARY_DESCRIPTORS, ESMFOLD_DESCRIPTORS
 from ovo.core.database.models import NumericGlobalDescriptor, Descriptor
 
 # SEQUENCE COMPOSITION
@@ -1140,7 +1140,7 @@ DESCRIPTORS = [v for v in globals().values() if isinstance(v, Descriptor)]
 PROTEINQC_MAIN_DESCRIPTORS = (
     PROTEINQC_SEQUENCE_DESCRIPTORS
     + PROTEINQC_STRUCTURE_DESCRIPTORS
-    + AF2_DEFAULT_DESCRIPTORS
+    + AF2_PRIMARY_DESCRIPTORS
     + ESMFOLD_DESCRIPTORS
     + descriptors_rfdiffusion.BACKBONE_METRICS
 )

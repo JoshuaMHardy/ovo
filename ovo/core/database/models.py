@@ -57,11 +57,12 @@ class UserSettings(Base):
 
 class Project(Base, MetadataMixin):
     __tablename__ = "project"
+    __table_args__ = (UniqueConstraint("name", "author", name="uq_project_name_author"),)
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default_factory=lambda: str(uuid.uuid4()))
     # TODO should project names be unique? Or conditionally - if they are public?
     name: Mapped[str] = mapped_column(String, default=None, nullable=False)
-    public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
 
 
 class Round(Base, MetadataMixin):
@@ -341,7 +342,11 @@ class Workflow:
         return "Time estimate: No time estimate available for this workflow"
 
     @abstractmethod
-    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
+    def get_pipeline_name(self) -> str:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def prepare_params(self, workdir: str) -> dict:
         """Submit the workflow to the scheduler and return the job id"""
         raise NotImplementedError()
 

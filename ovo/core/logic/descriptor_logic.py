@@ -9,6 +9,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from ovo import db, storage, get_scheduler
 from ovo.core.auth import get_username
+from ovo.core.database.models_proteinqc import ProteinQCWorkflow
 from ovo.core.database.models_refolding import RefoldingWorkflow, RefoldingSupportedDesignWorkflow
 from ovo.core.database.descriptors import ALL_DESCRIPTORS_BY_KEY, ALL_DESCRIPTOR_KEYS_SET
 from ovo.core.database.models import (
@@ -111,7 +112,10 @@ def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str,
     scheduler = get_scheduler(scheduler_key)
 
     # Submit the workflow
-    job_id = workflow.submit(scheduler)
+    job_id = scheduler.submit(
+        pipeline_name=workflow.get_pipeline_name(),
+        params=workflow.prepare_params(workdir=scheduler.workdir),
+    )
 
     # Create descriptor job
     descriptor_job = DescriptorJob(
@@ -128,10 +132,10 @@ def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str,
     return descriptor_job
 
 
-def submit_proteinqc(tools: list[str], scheduler: Scheduler, designs: List[Design], chains: list[str]) -> str:
+def prepare_proteinqc_params(workflow: ProteinQCWorkflow, workdir: str) -> dict:
     storage_paths = []
     design_ids = []
-    for design in designs:
+    for design in db.select(Design, id__in=workflow.design_ids):
         if not design.structure_path:
             print(f"Design {design.id} has no pdb path. Skipping...")
             continue
@@ -139,20 +143,17 @@ def submit_proteinqc(tools: list[str], scheduler: Scheduler, designs: List[Desig
         design_ids.append(design.id)
 
     # Prepare a txt file with workflow input paths, each file renamed to design_id.pdb
-    input_path = storage.prepare_workflow_inputs(storage_paths, scheduler.workdir, names=design_ids)
+    input_path = storage.prepare_workflow_inputs(storage_paths, workdir, names=design_ids)
 
-    job_id = scheduler.submit(
-        "proteinqc",
-        params={
-            "input_pdb": input_path,
-            "tools": ",".join(tools),
-            "chains": ",".join(chains),
-        },
-    )
-    return job_id
+    return {
+        "input_pdb": input_path,
+        "tools": ",".join(workflow.tools),
+        "chains": ",".join(list(workflow.chains)),
+        "batch_size": 50,
+    }
 
 
-def submit_refolding(workflow: RefoldingWorkflow, scheduler: Scheduler) -> str:
+def prepare_refolding_params(workflow: RefoldingWorkflow, workdir: str) -> dict:
     workflow.validate()
 
     designs = db.select(Design, id__in=workflow.design_ids)
@@ -177,26 +178,20 @@ def submit_refolding(workflow: RefoldingWorkflow, scheduler: Scheduler) -> str:
         design_paths += design_workflow.get_refolding_design_paths(pool_design_ids)
 
     # Prepare a txt file with workflow input paths, each file renamed to design_id.pdb
-    input_designs_txt = storage.prepare_workflow_inputs(design_paths, scheduler.workdir, names=design_ids)
+    input_designs_txt = storage.prepare_workflow_inputs(design_paths, workdir, names=design_ids)
 
     # Prepare native structure path (if specified)
     native_pdb_path = (
-        storage.prepare_workflow_input(workflow.native_pdb_path, scheduler.workdir)
-        if workflow.native_pdb_path
-        else None
+        storage.prepare_workflow_input(workflow.native_pdb_path, workdir) if workflow.native_pdb_path else None
     )
 
     # Prepare a single directory with reference files (requires filenames to be unique)
-    job_id = scheduler.submit(
-        "refolding",
-        params={
-            "design_type": workflow.design_type,
-            "input_designs": input_designs_txt,
-            "native_pdb": native_pdb_path,
-            "tests": ",".join(workflow.tests),
-        },
-    )
-    return job_id
+    return {
+        "design_type": workflow.design_type,
+        "input_designs": input_designs_txt,
+        "native_pdb": native_pdb_path,
+        "tests": ",".join(workflow.tests),
+    }
 
 
 def process_results(descriptor_job: DescriptorJob, callback: Callable = None, wait: bool = True):
@@ -344,10 +339,24 @@ def find_id_column(df: pd.DataFrame, df_name: str):
 def generate_descriptor_values_for_design(
     design_id: str,
     table_ids: str | tuple,
-    descriptor_job_id: str,
+    descriptor_job_id: str | None,
     descriptor_tables,
     chains: list[str],
 ) -> list[DescriptorValue]:
+    """Generate DescriptorValue objects for a given design based on descriptor tables.
+
+    Requirements (otherwise an error is raised, leading to interrupted processing of the job):
+    - Each descriptor table must contain at least one recognized descriptor (defined by Descriptor objects)
+    - One of the design's table_ids must be found in each descriptor table (each design should be present)
+    - Descriptor table index must be unique
+
+    :param design_id: ID of the design
+    :param table_ids: ID(s) corresponding to the design in the dataframes (can be a single string or a tuple of strings)
+    :param descriptor_job_id: ID of the DescriptorJob
+    :param descriptor_tables: Dictionary of descriptor tables (tool_key -> pd.DataFrame, indexed by table_id)
+    :param chains: List of chain IDs the descriptors apply to
+    :return: List of DescriptorValue objects
+    """
     if isinstance(table_ids, str):
         table_ids = (table_ids,)
 
@@ -453,7 +462,7 @@ def export_design_descriptors_excel(
     sheet.freeze_panes(row_offset, column_offset)
 
     # Set column width
-    index_width = 15
+    index_width = 18
     sheet.set_column(0, 0, index_width)
     width = 10
     sheet.set_column(1, n_cols - 1, width)

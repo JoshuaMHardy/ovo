@@ -102,10 +102,13 @@ class BindCraftBinderDesignWorkflow(DesignWorkflow):
         self.selected_segments = segments
         self.bindcraft_params.hotspots = from_segments_to_hotspots(segments)
 
-    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
-        from ovo.core.logic.design_logic_bindcraft import submit_workflow
+    def get_pipeline_name(self) -> str:
+        return "ovo.bindcraft"
 
-        return submit_workflow(self, scheduler, pipeline_name=pipeline_name)
+    def prepare_params(self, workdir: str) -> dict:
+        from ovo.core.logic.design_logic_bindcraft import prepare_bindcraft_params
+
+        return prepare_bindcraft_params(self, workdir=workdir)
 
     def process_results(self, job: DesignJob, callback: Callable = None):
         """Process results of a successful workflow - download files from workdir, save DesignJob, Pool and Designs"""
@@ -123,7 +126,7 @@ class BindCraftBinderDesignWorkflow(DesignWorkflow):
     @classmethod
     def get_download_fields(cls):
         return {
-            "Input PDB": (BindCraftBinderDesignWorkflow, "bindcraft_params.input_pdb_path"),
+            "BindCraft Input PDB": (BindCraftBinderDesignWorkflow, "bindcraft_params.input_pdb_path"),
             "BindCraft design": (Design, "structure_path"),
         }
 

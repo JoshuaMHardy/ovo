@@ -1,12 +1,12 @@
 import os
 import shutil
 import tempfile
-from dataclasses import dataclass, is_dataclass, fields
+from dataclasses import is_dataclass, fields
 
 from sqlalchemy.orm import make_transient
 
 from ovo import db, storage, config
-from ovo.core.configuration import OVOConfig, ConfigProps, load_config
+from ovo.core.configuration import ConfigProps, load_config, save_default_config
 from ovo.core.database import SqlDBEngine, DBEngine, DataclassType
 from ovo.core.database.descriptors import ALL_DESCRIPTORS_BY_KEY
 from ovo.core.database.models import (
@@ -19,26 +19,8 @@ from ovo.core.database.models import (
     DescriptorValue,
     FileDescriptor,
 )
-from ovo.core.logic.project_logic import PERSONAL_PROJECT_NAME
 from ovo.core.storage import Storage
-
-
-@dataclass
-class ImportSummary:
-    """Summary information about a project to be imported"""
-
-    id: str
-    name: str
-    author: str
-    public: bool
-    created_date: str
-    round_count: int
-    pool_count: int
-    design_count: int
-    descriptor_job_count: int
-    descriptor_value_count: int
-    counts: dict[str, int]
-
+from ovo.core.utils.formatting import safe_filename
 
 # Configuration for import/export operations (Project handled separately)
 IMPORT_EXPORT_CONFIGS = [
@@ -139,13 +121,14 @@ def export_import_project(
         # Use the filter function to get filter dict and fetch objects
         print(f"Fetching {model_class.__name__} from DB for export")
         all_objects[table_name] = source_db.select(model_class, **filter_dict)
+        print(f" Fetched {len(all_objects[table_name]):,} {model_class.__name__} objects")
 
         # Update counts
         counts[table_name] = len(all_objects[table_name])
 
         # Check for conflicts if requested and model has an id field and we have objects (but not when only counting)
         if check_conflicts and not count_only and hasattr(model_class, "id") and all_objects[table_name]:
-            print("Checking for conflicts...")
+            print("- Checking for conflicts...")
             obj_ids = [obj.id for obj in all_objects[table_name]]
             if dest_db.count(model_class, id__in=obj_ids):
                 existing_ids = [obj.id for obj in dest_db.select(model_class, id__in=obj_ids)]
@@ -204,11 +187,8 @@ def export_import_project(
     # Copy all objects to destination database
     print("Inserting entities to DB...")
     for project in projects:
-        # handle name conflicts of personal projects
-        is_personal_project_conflict = project.name == PERSONAL_PROJECT_NAME and source_db.count(
-            Project, name=project.name, author=project.author
-        )
-        if is_personal_project_conflict:
+        # handle project name conflicts
+        while dest_db.count(Project, name=project.name, author=project.author):
             project.name = f"{project.name} (Copy)"
 
     for table_name, objects in all_objects.items():
@@ -238,13 +218,15 @@ def export_project(project_id: str, output_zip_path: str = None, accepted_only: 
     project = db.get(Project, project_id)
 
     # Create temporary directory for export
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory() as temp_root:
+        temp_home = os.path.join(temp_root, safe_filename(project.name))
+        os.makedirs(temp_home, exist_ok=True)
+
         # Add minimal config file
-        with open(os.path.join(temp_dir, "config.yml"), "wt") as f:
-            f.write(OVOConfig.default(props=ConfigProps()))
+        save_default_config(temp_home, config_props=ConfigProps(read_only=True))
 
         # Create new SQLite database using SqlDBEngine
-        export_db_path = os.path.join(temp_dir, "ovo.db")
+        export_db_path = os.path.join(temp_home, "ovo.db")
         export_db = SqlDBEngine(db_url=f"sqlite:///{export_db_path}")
         export_db.init()
 
@@ -253,11 +235,15 @@ def export_project(project_id: str, output_zip_path: str = None, accepted_only: 
             source_db=db,
             source_storage=storage,
             dest_db=export_db,
-            dest_dir=os.path.join(temp_dir, "storage"),
+            dest_dir=os.path.join(temp_home, "storage"),
             project_id=project_id,
             accepted_only=accepted_only,
             check_conflicts=False,  # No need to check conflicts when exporting
         )
+
+        if not project.public:
+            print("NOTE: Project is private but will be exported as public!")
+            export_db.save_value(Project, "public", True, id=project.id)
 
         # Add a README file
         readme_content = f"""
@@ -274,6 +260,11 @@ def export_project(project_id: str, output_zip_path: str = None, accepted_only: 
         1. Use the Import & Export admin page in OVO
         2. Upload this ZIP file
         3. The system will restore the project data and files
+        
+        To preview this data:
+        1. Unpack this ZIP file
+        2. set OVO_HOME environment variable to the unpacked directory path
+        3. run "ovo app"
     
         Export Summary:
         - Rounds: {counts["round"]}
@@ -283,22 +274,24 @@ def export_project(project_id: str, output_zip_path: str = None, accepted_only: 
         - Descriptor value: {counts["descriptor_value"]}
     """.lstrip()
 
-        with open(os.path.join(temp_dir, "README.txt"), "wt") as f:
+        with open(os.path.join(temp_home, "README.txt"), "wt") as f:
             f.write(readme_content)
 
         # Create the final ZIP file
-        zip_file_path = temp_dir.removesuffix("/") + ".zip"
+        print("Creating ZIP archive...")
+        temp_zip_path = temp_root.removesuffix("/") + ".zip"
         shutil.make_archive(
-            temp_dir.removesuffix(".zip"),  # archive path (without file extension)
+            temp_zip_path.removesuffix(".zip"),  # archive path (without file extension)
             "zip",  # archive format
-            temp_dir,  # directory to archive
+            temp_root,  # directory to archive
         )
 
     if output_zip_path:
-        shutil.move(zip_file_path, output_zip_path)
+        shutil.move(temp_zip_path, output_zip_path)
         return output_zip_path
 
-    return zip_file_path
+    # Return path to the temporary ZIP file - should be deleted by the caller!
+    return temp_zip_path
 
 
 def import_project(home_dir: str, project_id: str = None, count_only=False) -> dict[str, int]:

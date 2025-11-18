@@ -10,7 +10,13 @@ from ovo.core.aws import AWSSessionManager
 @SchedulerTypes.register()
 class HealthOmicsScheduler(Scheduler):
     def __init__(
-        self, name: str, workdir: str, reference_files_dir: str, submission_args: dict, aws: AWSSessionManager
+        self,
+        name: str,
+        workdir: str,
+        reference_files_dir: str,
+        submission_args: dict,
+        allow_submit: bool,
+        aws: AWSSessionManager,
     ):
         """
         Args:
@@ -19,9 +25,10 @@ class HealthOmicsScheduler(Scheduler):
             workdir: Working directory - where to store workflow outputs (S3 URI including s3:// prefix)
             reference_files_dir: UNUSED Directory with model weights and other reference files
             role_arn: AWS IAM role ARN
+            allow_submit: Whether to allow job submission
             submission_args: Default submission arguments, can be overridden in submit method
         """
-        super().__init__(name, workdir, reference_files_dir, submission_args)
+        super().__init__(name, workdir, reference_files_dir, allow_submit, submission_args)
         self.aws = aws
 
     def submit(self, pipeline_name: str, params: dict = None, submission_args: dict = None) -> str:
@@ -34,6 +41,9 @@ class HealthOmicsScheduler(Scheduler):
         :return: Scheduler job ID
         """
         assert isinstance(params, dict), f"params should be a dictionary, got: {type(params).__name__}"
+
+        if not self.allow_submit:
+            raise RuntimeError("Job submission is disabled")
 
         submission_args = {**self.submission_args, **(submission_args or {})}
         workflow_name_prefix = submission_args.pop("workflow_name_prefix", "")

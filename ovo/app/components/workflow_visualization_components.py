@@ -11,6 +11,7 @@ from ovo.core.database import (
     descriptors_rfdiffusion,
     descriptors_refolding,
     descriptors_proteinqc,
+    descriptors_bindcraft,
 )
 from ovo.core.database.models_rfdiffusion import (
     RFdiffusionWorkflow,
@@ -86,10 +87,10 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
             descriptors_rfdiffusion.RADIUS_OF_GYRATION.key,
             descriptors_rfdiffusion.PYDSSP_HELIX_PERCENT.key,
             descriptors_rfdiffusion.PYDSSP_SHEET_PERCENT.key,
-            descriptors_refolding.AF2_DEFAULT_PAE.key,
-            descriptors_refolding.AF2_DEFAULT_DESIGN_RMSD.key,
-            descriptors_refolding.AF2_DEFAULT_NATIVE_MOTIF_RMSD.key,
-            descriptors_refolding.AF2_DEFAULT_PLDDT.key,
+            descriptors_refolding.AF2_PRIMARY_PAE.key,
+            descriptors_refolding.AF2_PRIMARY_DESIGN_RMSD.key,
+            descriptors_refolding.AF2_PRIMARY_NATIVE_MOTIF_RMSD.key,
+            descriptors_refolding.AF2_PRIMARY_PLDDT.key,
         ],
     )
 
@@ -357,9 +358,9 @@ def rfdiffusion_binder_design_visualization(design_id: str):
             descriptors_rfdiffusion.PYROSETTA_DDG.key,
             descriptors_rfdiffusion.PYROSETTA_CMS.key,
             descriptors_rfdiffusion.PYROSETTA_SAP_SCORE.key,
-            descriptors_refolding.AF2_DEFAULT_IPAE.key,
-            descriptors_refolding.AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD.key,
-            descriptors_refolding.AF2_DEFAULT_PLDDT.key,
+            descriptors_refolding.AF2_PRIMARY_IPAE.key,
+            descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.key,
+            descriptors_refolding.AF2_PRIMARY_PLDDT.key,
         ],
     )
 
@@ -638,14 +639,14 @@ def bindcraft_binder_design_visualization(design_id: str):
     show_design_metrics(
         design_id,
         descriptor_keys=[
-            "bindcraft|Average_pLDDT",
-            "bindcraft|Average_i_pAE",
-            "bindcraft|Average_Hotspot_RMSD",
-            "bindcraft|Average_dG",
-            "bindcraft|Average_Relaxed_Clashes",
-            "bindcraft|Average_n_InterfaceResidues",
-            "bindcraft|Average_Binder_Helix%",
-            "bindcraft|Average_Binder_BetaSheet%",
+            "bindcraft|af2|Average_pLDDT",
+            "bindcraft|af2|Average_i_pAE",
+            "bindcraft|af2|Average_Hotspot_RMSD",
+            "bindcraft|interface|Average_dG",
+            "bindcraft|interface|Average_Relaxed_Clashes",
+            "bindcraft|interface|Average_n_InterfaceResidues",
+            "bindcraft|dssp|Average_Binder_Helix%",
+            "bindcraft|dssp|Average_Binder_BetaSheet%",
         ],
     )
 

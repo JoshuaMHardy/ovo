@@ -9,20 +9,34 @@ from ovo.core.database.models import Project
 
 @st.fragment()
 @st.dialog("Input new project name")
-def create_project():
+def create_project_dialog():
+    author = get_username()
     project_name = st.text_input("Project name", placeholder="My Project")
-    public = st.toggle(label="Public", value=False)
+    public = st.toggle(label="Public", value=True)
+
+    st.caption(
+        "Public projects are visible to all users with access to this app. "
+        "Private projects are only visible to you"
+        + (
+            ", but are accessible by other users when shared via a link."
+            if config.auth.allow_private_project_link_access
+            else "."
+        )
+    )
 
     if st.button("Create project"):
         if project_name == "":
             st.error("Please provide a project name.")
             return
 
-        if db.select(Project, name=project_name) and public:
+        if db.count(Project, name=project_name, public=True):
             st.error(f'Public project "{project_name}" already exists. Please choose another name.')
             return
+        elif db.count(Project, name=project_name, author=author):
+            st.error(f'You already have a private project named "{project_name}". Please choose another name.')
+            return
 
-        new_project = Project(name=project_name, author=get_username(), public=public)
+        new_project = Project(name=project_name, author=author, public=public)
         db.save(new_project)
 
         st.session_state.new_project_name = project_name
@@ -50,16 +64,25 @@ def project_sidebar_component():
     success_message = None
 
     if st.session_state.project is None:
-        # Restore last selected project or select personal project
-        user_settings = get_or_create_user_settings()
         if project := get_query_arg_project():
+            # Load project from URL query parameter
             success_message = f"Opened project from URL"
             st.session_state.project = project
-        elif user_settings.last_project_id and (project := db.get(Project, user_settings.last_project_id)):
-            success_message = f"Resuming in project **{project.name}**"
-            st.session_state.project = project
+        elif config.props.read_only:
+            # In read-only mode, just select the first available project
+            project_ids_and_names = get_cached_project_ids_and_names(username=get_username())
+            if not project_ids_and_names:
+                st.error(f"No projects available to user {get_username()} in read-only mode.")
+                st.stop()
+            st.session_state.project = db.get(Project, id=list(project_ids_and_names.keys())[0])
         else:
-            st.session_state.project = get_or_create_personal_project()
+            # Restore last selected project or select personal project
+            user_settings = get_or_create_user_settings()
+            if user_settings.last_project_id and (project := db.get(Project, user_settings.last_project_id)):
+                success_message = f"Resuming in project **{project.name}**"
+                st.session_state.project = project
+            else:
+                st.session_state.project = get_or_create_personal_project()
 
     project_ids_and_names = get_cached_project_ids_and_names(
         username=get_username(), extra_project_ids=[st.session_state.project.id]
@@ -99,15 +122,18 @@ def project_sidebar_component():
         selected_project = db.get(Project, id=selected_project_id)
         success_message = f"Selected project **{selected_project.name}**"
         st.session_state.project = selected_project
-        user_settings = get_or_create_user_settings()
-        user_settings.last_project_id = selected_project.id
-        db.save(user_settings)
+        if not config.props.read_only:
+            user_settings = get_or_create_user_settings()
+            user_settings.last_project_id = selected_project.id
+            db.save(user_settings)
 
     if selected_project_id != st.query_params.get("project_id"):
         st.query_params["project_id"] = selected_project_id
 
-    if st.sidebar.button(":material/add: Create new project"):
-        create_project()
+    if config.props.read_only:
+        st.sidebar.info("Read-only mode")
+    elif st.sidebar.button(":material/add: Create new project"):
+        create_project_dialog()
 
     if success_message:
         st.sidebar.success(success_message)

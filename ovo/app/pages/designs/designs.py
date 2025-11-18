@@ -1,6 +1,6 @@
 import streamlit as st
 
-from ovo import db
+from ovo import db, config
 from ovo.app.components.navigation import project_round_selector, pool_selector_table
 from ovo.app.utils.page_init import initialize_page
 from ovo.app.components.create_new_pool import create_new_pool
@@ -31,7 +31,11 @@ if selected_design_ids is not None:
 else:
     st.subheader("Pools")
 
-    if st.button(":material/upload: Upload designs"):
+    if st.button(
+        ":material/upload: Upload designs",
+        disabled=config.props.read_only,
+        help="Ovo is running in read-only mode, design upload is disabled" if config.props.read_only else None,
+    ):
         create_new_pool()
 
     with st.spinner("Loading pools..."):

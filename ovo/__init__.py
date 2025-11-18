@@ -22,7 +22,7 @@ import importlib
 try:
     config = load_config(home_dir=GLOBAL_OVO_HOME or os.getenv("OVO_HOME") or DEFAULT_OVO_HOME)
 
-    db = SqlDBEngine(db_url=config.db.url, verbose=config.db.verbose)
+    db = SqlDBEngine(db_url=config.db.url, verbose=config.db.verbose, read_only=config.props.read_only)
     db.init()
 
     storage = Storage(
@@ -46,10 +46,12 @@ try:
             init_args["aws"] = AWSSessionManager(
                 assume_role=scheduler_config.aws.assume_role_arn, region_name=scheduler_config.aws.region
             )
-        schedulers[scheduler_key] = SchedulerTypes.REGISTERED_CLASSES[scheduler_config.type](
+        SchedulerClass = SchedulerTypes.REGISTERED_CLASSES[scheduler_config.type]
+        schedulers[scheduler_key] = SchedulerClass(
             name=scheduler_config.name,
             workdir=scheduler_config.workdir,
             reference_files_dir=config.reference_files_dir,
+            allow_submit=not config.props.read_only,
             submission_args=scheduler_config.submission_args,
             **init_args,
         )
@@ -77,7 +79,7 @@ try:
         importlib.reload(submodule)
 
     # Additional imports at the bottom to avoid circular dependencies
-    from ovo.core.logic import design_logic, descriptor_logic, job_logic, project_logic
+    from ovo.core.logic import design_logic, descriptor_logic, job_logic, project_logic, import_export_logic
 
 except OVONotInitializedError:
     if ("init" in sys.argv and "home" in sys.argv) or "-h" in sys.argv or "--help" in sys.argv:

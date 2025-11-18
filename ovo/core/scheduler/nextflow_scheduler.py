@@ -28,6 +28,8 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
         :param submission_args: Submission arguments for the scheduler, overrides values in self.submission_args
         :return: Scheduler job ID
         """
+        if not self.allow_submit:
+            raise RuntimeError("Job submission is disabled")
         submission_args = {**self.submission_args, **(submission_args or {})}
         sync = submission_args.pop("sync", False)
         if self.has_queue():
@@ -162,6 +164,7 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
 
         command = ["nextflow", "run"]
         command += ["-with-trace", "trace.txt"]
+        command += ["-with-report", "report.html"]
         command += ["-work-dir", os.path.join(self.workdir, "work")]
         command += [pipeline_dir]
         command += ["--publish_dir", "output"]

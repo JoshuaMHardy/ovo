@@ -85,9 +85,8 @@ ovo init home
 This will guide you through creating the ovo "home directory" where all data and configuration will be stored.
 
 OVO supports multiple independent home directories on a single system. When OVO starts, 
-it looks for the active home directory in the following order:
-
-- TODO
+it looks for the active home directory in `OVO_HOME` environment variable. 
+If the variable is not set, it defaults to `~/ovo`.
 
 The ovo home directory contains the following important files and folders:
 

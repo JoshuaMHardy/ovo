@@ -10,6 +10,7 @@ from ovo.core.configuration import (
     get_shell_config_path,
     save_global_home_dir,
     global_config_flag,
+    save_default_config,
 )
 import subprocess
 import shutil
@@ -98,9 +99,7 @@ def home(
     home_dir: str | None = typer.Argument(None, help="OVO home directory"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Confirm all without prompting"),
     no_env: bool = typer.Option(False, "--no-env", help="Do not set OVO_HOME in shell .bashrc/.zshrc file"),
-    default_profile: str = typer.Option(
-        "conda", "--profile", help="Default nextflow profile to use in default scheduler"
-    ),
+    default_profile: str = typer.Option(None, "--profile", help="Default nextflow profile to use in default scheduler"),
 ):
     """Initialize the OVO home directory"""
 
@@ -108,7 +107,7 @@ def home(
 
     if home_dir is None:
         console.print("""
-[bold]Select OVO_HOME[/bold]
+[bold]Create OVO home directory[/bold]
 
 This directory will contain all OVO files:
 
@@ -126,33 +125,55 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
 
     home_dir = os.path.abspath(os.path.expanduser(home_dir))
 
-    config_path = os.path.join(home_dir, "config.yml")
+    while os.path.exists(home_dir):
+        if yes:
+            raise FileExistsError(f"Home directory already exists: {home_dir}")
+        # show error f"Home directory already exists: {home_dir}"
+        console.print(f"[red]Error:[/red] Home directory already exists: [bold]{home_dir}[/bold]")
+        home_dir = Prompt.ask("Please choose a different path for the new OVO Home directory")
+        home_dir = os.path.abspath(os.path.expanduser(home_dir))
 
-    if os.path.exists(home_dir):
-        raise OVOCliError(f"Home directory already exists: {home_dir}")
+    if not yes and home_dir != DEFAULT_OVO_HOME:
+        if not Confirm.ask(f"Confirm directory: [bold]{home_dir}[/bold]"):
+            console.print("Aborted")
+            raise typer.Exit()
 
-    if not yes and not Confirm.ask(f"Confirm directory: [bold]{home_dir}[/bold]"):
-        console.print("Aborted")
-        raise typer.Exit()
+    if not default_profile:
+        default_profile = "conda"
+        if not yes:
+            console.print("""
+    OVO uses Nextflow to run workflows and manage software environments.
+    How do you want the default OVO scheduler to manage dependencies?""")
+            default_profile = Prompt.ask(
+                "\nSelect profile, or press [bold]Enter[/bold] to select the default",
+                choices=["conda", "singularity", "apptainer", "docker", "podman"],
+                default=default_profile,
+            )
+
+    # ask about using conda when docker is not on PATH
+    if not shutil.which(default_profile):
+        console.print(
+            f"[yellow]WARNING:[/yellow] {default_profile} not found on PATH, please make sure to install or activate {default_profile} or change the default scheduler profile (docker, singularity, apptainer, ...)"
+        )
 
     config_props = ConfigProps()
     config_props.pyrosetta_license = yes or Confirm.ask(
         "Enable fastrelax? In case of commercial use, this requires a PyRosetta license"
     )
 
-    # ask about using conda when docker is not on PATH
-    if not shutil.which("conda") and "conda" in default_profile:
-        raise OVOCliError(
-            "Conda not found on PATH, please install conda or use --profile to specify the default scheduler profile (docker, singularity, apptainer, ...)"
-        )
+    admin_users = []
+    if os.environ.get("USER"):
+        # we don't want to flood the user with too many questions, enable by default
+        admin_users.append(os.environ["USER"])
 
     os.makedirs(home_dir, exist_ok=True)
 
-    with open(config_path, "w") as f:
-        f.write(OVOConfig.default(props=config_props, default_profile=default_profile))
-
-    with open(os.path.join(home_dir, "nextflow_local.config"), "w") as f:
-        f.write(OVOConfig.default_nextflow_config())
+    config_path = save_default_config(
+        home_dir=home_dir,
+        config_props=config_props,
+        default_profile=default_profile,
+        admin_users=admin_users,
+    )
 
     console.print(f"\n[green]✔[/green] Initialized OVO config: [bold]{config_path}[/bold]")
 
@@ -161,21 +182,25 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
         # Detect shell and determine config file
         shell_config_path = get_shell_config_path()
         console.print("\nWould you like to remember the ovo home dir?")
-        console.print("- 0: Do not remember, will manage OVO_HOME env var myself")
-        console.print(f"- 1: Use this home dir for this installation of OVO (creates {global_config_flag})")
+        console.print("- none: Do not remember, will manage OVO_HOME env var myself")
+        console.print(f"- global: Use this home dir for this installation of OVO (creates {global_config_flag})")
         console.print(
-            f"- 2: Use this home dir for myself (append the env var to my shell config at {shell_config_path})"
+            f"- local: Use this home dir for myself (append the env var to my shell config at {shell_config_path})"
         )
 
-        choice = Prompt.ask("Select an option", choices=["0", "1", "2"])
+        choice = Prompt.ask(
+            "\nSelect an option or press [bold]Enter[/bold] to select the default",
+            choices=["none", "global", "local"],
+            default="local",
+        )
 
-        if choice == "0":
+        if choice == "none":
             console.print("\nPlease set this environment variable manually:")
             console.print(f"[bold green]{export_command}[/bold green]")
-        elif choice == "1":
+        elif choice == "global":
             save_global_home_dir(home_dir)
             console.print("[bold]Saved global home directory for this installation of OVO[/bold]")
-        elif choice == "2":
+        elif choice == "local":
             if not shell_config_path:
                 console.print(
                     "\n[red]Could not detect your shell config file (e.g. .bashrc or .zshrc). "

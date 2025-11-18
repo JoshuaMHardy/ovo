@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 import zipfile
@@ -140,6 +141,9 @@ def export_tab():
         with open(zip_path, "rb") as f:
             zip_data = f.read()
 
+        # Clean up temp file
+        os.remove(zip_path)
+
         # Prepare download buttons
         progress_bar.progress(100)
         # clear status
@@ -154,7 +158,7 @@ def export_tab():
         st.download_button(
             label=f"📦 Download Project Export ({naturalsize(len(zip_data))} ZIP)",
             data=zip_data,
-            file_name=f"{safe_filename(project.name)}_export.zip",
+            file_name=f"{safe_filename(project.name)}_ovo_export.zip",
             mime="application/zip",
             help="Contains ovo.db database, storage files with relative paths, and config.yml template",
         )
@@ -179,11 +183,14 @@ def import_tab():
 
     if uploaded_file:
         with st.spinner("Importing ZIP file..."):
-            temp_dir = tempfile.mkdtemp(prefix="ovo")
+            temp_root = tempfile.mkdtemp(prefix="ovo")
             with zipfile.ZipFile(uploaded_file, "r") as zipf:
-                zipf.extractall(temp_dir)
-            st.session_state.import_temp_dir = temp_dir
-            st.session_state.import_counts = import_project(temp_dir, count_only=True)
+                zipf.extractall(temp_root)
+            paths = os.listdir(temp_root)
+            if not len(paths) == 1 or not os.path.isdir(os.path.join(temp_root, paths[0])):
+                raise ValueError(f"Invalid ZIP file structure: expected a single root directory, got: {paths}")
+            st.session_state.import_temp_dir = os.path.join(temp_root, paths[0])
+            st.session_state.import_counts = import_project(st.session_state.import_temp_dir, count_only=True)
             st.session_state.import_done = False
 
     if not st.session_state.get("import_counts"):

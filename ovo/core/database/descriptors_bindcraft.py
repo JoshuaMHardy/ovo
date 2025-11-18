@@ -243,8 +243,8 @@ DESCRIPTORS = [
         max_value=100,
     ),
     NumericGlobalDescriptor(
-        name="AF2 Hotspot RMSD",
-        description="Unaligned RMSD of binder compared to original trajectory, in other words how far is binder in the repredicted complex from the original binding site (average across AF2 models)",
+        name="AF2 Target-aligned Binder RMSD",
+        description='RMSD of binder aligned on target compared to original trajectory, in other words how far is binder in the repredicted complex from the original binding site. Called "AF2 Hotspot RMSD" in BindCraft. (average across AF2 models)',
         unit="Å",
         tool="BindCraft",
         key="bindcraft|af2|Average_Hotspot_RMSD",
@@ -288,7 +288,7 @@ DESCRIPTORS = [
         min_value=0,
     ),
     NumericGlobalDescriptor(
-        name="AF2 Binder RMSD",
+        name="AF2 Binder-aligned Binder RMSD",
         description="RMSD of binder predicted alone compared to original trajectory (average across AF2 models)",
         unit="Å",
         tool="BindCraft",

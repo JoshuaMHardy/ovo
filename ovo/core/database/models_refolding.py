@@ -29,10 +29,13 @@ class RefoldingWorkflow(DescriptorWorkflow):
     design_type: str = None
     native_pdb_path: str = None
 
-    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
-        from ovo.core.logic.descriptor_logic import submit_refolding
+    def get_pipeline_name(self) -> str:
+        return "ovo.refolding"
 
-        return submit_refolding(self, scheduler)
+    def prepare_params(self, workdir: str) -> dict:
+        from ovo.core.logic.descriptor_logic import prepare_refolding_params
+
+        return prepare_refolding_params(self, workdir=workdir)
 
     def process_results(self, job: DescriptorJob, callback: Callable = None):
         from ovo import db

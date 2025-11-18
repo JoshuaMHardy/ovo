@@ -69,20 +69,20 @@ Use cases:
     <!--[2] also shows the success rate is better when altering the specificity than when starting de-novo. In [3] the starting design was not
                 de novo from RFdiffusion but rather some modified structure using RF joint inpainting.  -->
 
-This workflow noises and denoises the binder chain in the input structure for a specified number of iterations (noising
+This workflow noises and denoises the binder chain in the input structure for a specified number of timesteps (noising
 strength) using RFdiffusion. This allows sampling backbones around the starting binder structure. The higher the number
-of iterations, the more the generated backbones will diverge from the original binder structure.
+of timesteps, the more the generated backbones will diverge from the original binder structure.
 
 - **Input**
     - Protein structures — one or more PDB files with binder chain (A) and target chain (B), or OVO Design IDs
 - **Main parameters**
     - Hotspot residues to select preferred binding site (optional, RFdiffusion may preserve the original binding site even without hotspots, but specifying hotspots explicitly enables computing hotspot-focused interface metrics) 
-    - (Optional) Noising strength (Num RFdiffusion iterations T or `partial_T`), the default is 20 out of 1-50
+    - (Optional) Noising strength (num partial diffusion timesteps `partial_T`), the default is 20 out of 1-50
 - **Output**
     - Designs — binder sequences and structures in complex with target protein
     - Design descriptors
         - Refolding metrics
-        - PyRosetta descriptors
+        - Rosetta descriptors
         - Backbone metrics
         - Sequence composition
 
@@ -111,18 +111,18 @@ for download. Most relevant descriptors are listed below:
 - Aromaticity
 - And more; computed using BioPython ProteinAnalysis <sup>[5]</sup>
 
-#### PyRosetta descriptors <sup>[6]</sup>
+#### Rosetta descriptors <sup>[6]</sup>
 
-- **{descriptors_rfdiffusion.PYROSETTA_DDG.name}** — PyRosetta binding energy of the complex (in Rosetta energy units). Lower (negative) values indicate better binding affinity.
-- **{descriptors_rfdiffusion.PYROSETTA_CMS.name}** — PyRosetta molecular surface area (in square angstroms).
+- **{descriptors_rfdiffusion.PYROSETTA_DDG.name}** — Rosetta binding energy of the complex (in Rosetta energy units). Lower (negative) values indicate better binding affinity.
+- **{descriptors_rfdiffusion.PYROSETTA_CMS.name}** — Rosetta molecular surface area (in square angstroms).
 - **{descriptors_rfdiffusion.PYROSETTA_SAP_SCORE.name}** — Evaluates hydrophobicity of surface exposed regions. Positive values indicate hydrophobic molecules.
 
 #### AlphaFold2 initial guess refolding metrics
 
-- **{descriptors_refolding.AF2_DEFAULT_IPAE.name}** — Binder–target pose error (predicted) in angstroms. Predicted Aligned Error (residue–residue 
+- **{descriptors_refolding.AF2_PRIMARY_IPAE.name}** — Binder–target pose error (predicted) in angstroms. Predicted Aligned Error (residue–residue 
     matrix) averaged over binder→target residue values.
-- **{descriptors_refolding.AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD.name}** — Cα RMSD of the binder between RFdiffusion output and AF2 prediction (aligned on target)
-- **{descriptors_refolding.AF2_DEFAULT_BINDER_PAE.name}** — Binder error (predicted) including the binder–target pose, in angstroms. Predicted Aligned Error 
+- **{descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.name}** — Cα RMSD of the binder between RFdiffusion output and AF2 prediction (aligned on target)
+- **{descriptors_refolding.AF2_PRIMARY_BINDER_PAE.name}** — Binder error (predicted) including the binder–target pose, in angstroms. Predicted Aligned Error 
     <sup>[4]</sup> (residue–residue matrix) averaged over binder→binder and binder→target residue values.
 
 We also include AF2 binder pLDDT and pTM scores.
@@ -174,7 +174,7 @@ def input_step():
                 workflow = st.session_state.workflows[__file__]
                 workflow.preview_job_id = None
                 workflow.rfdiffusion_params.partial_diffusion = True
-                workflow.rfdiffusion_params.iterations = 20
+                workflow.rfdiffusion_params.timesteps = 20
                 workflow.rfdiffusion_params.num_designs = 10
                 # TODO use presets to initialize this instead
                 workflow.refolding_params.primary_test = "af2_model_1_multimer_tt_3rec"
@@ -362,18 +362,16 @@ def preview_step():
 
     # Generate preview
     st.write("#### Generate preview")
-    num_iterations = 10
+    num_timesteps = 10
     with st.columns([2, 1])[0]:
         st.write(f"""
-        Generate a quick RFdiffusion preview of the design with {num_iterations} partial diffusion iterations to verify your inputs.
+        Generate a quick RFdiffusion preview of the design with {num_timesteps} partial diffusion timesteps to verify your inputs.
 
         This should take 2-10 minutes depending on the length of the target and binder.
         """)
 
     if st.button(":material/wand_stars: Generate preview"):
-        workflow.preview_job_id = submit_rfdiffusion_preview(
-            workflow, partial_diffusion=True, iterations=num_iterations
-        )
+        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, partial_diffusion=True, timesteps=num_timesteps)
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:

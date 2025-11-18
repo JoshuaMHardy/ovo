@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List, Collection
 
-from ovo import db
+from ovo import db, config
 from ovo.core.database.cache_clearing import clear_when_modified
 from ovo.core.database.models import Project, DescriptorValue, Descriptor, Pool, Round, Design, DesignJob
 import streamlit as st
@@ -14,11 +14,23 @@ from ovo.core.logic.design_logic import get_design_jobs_table, get_pools_table
 @st.cache_data(ttl="1h")
 def get_cached_project_ids_and_names(username: str, extra_project_ids: Collection[str] = None) -> dict[str, str]:
     """Return dict of project id -> name"""
-    public_projects = db.select(Project, public=True)
-    private_projects = db.select(Project, public=False, author=username)
-    extra_projects = db.select(Project, id__in=extra_project_ids or [])
-    projects = sorted(public_projects + private_projects + extra_projects, key=lambda project: project.name.lower())
-    return {project.id: project.name for project in projects}
+    if username in config.auth.admin_users:
+        projects = db.select(Project)
+        return {
+            project.id: project.name
+            + (
+                f" (private, only visible to {project.author} and admins)"
+                if not project.public and project.author != username
+                else ""
+            )
+            for project in projects
+        }
+    else:
+        public_projects = db.select(Project, public=True)
+        private_projects = db.select(Project, public=False, author=username)
+        extra_projects = db.select(Project, id__in=extra_project_ids or [])
+        projects = sorted(public_projects + private_projects + extra_projects, key=lambda project: project.name.lower())
+        return {project.id: project.name for project in projects}
 
 
 @clear_when_modified(DescriptorValue)

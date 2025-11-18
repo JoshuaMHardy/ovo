@@ -132,118 +132,118 @@ ESMFOLD_DESCRIPTORS = [
 
 
 # INITIAL GUESS DESCRIPTORS
-AF2_DEFAULT_STRUCTURE_PATH = StructureFileDescriptor(
+AF2_PRIMARY_STRUCTURE_PATH = StructureFileDescriptor(
     name="AlphaFold2 Initial Guess prediction",
     description="AlphaFold2 structure prediction using Initial Guess protocol initialized with designed structure, with optional structure template input",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|af2_structure_path",
+    key="refolding|af2_primary|af2_structure_path",
     structure_type="prediction",
     b_factor_value="plddt",
 )
 
-AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD = NumericGlobalDescriptor(
-    name="AF2 Binder RMSD",
-    description="Target-aligned binder RMSD between design and AF2 prediction",
+AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD = NumericGlobalDescriptor(
+    name="AF2 Target-aligned Binder RMSD",
+    description="Target-aligned binder RMSD between Ca backbone atoms of design and AF2 prediction",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|target_aligned_binder_rmsd",
+    key="refolding|af2_primary|target_aligned_binder_rmsd",
     min_value=0,
     comparison="lower_is_better",
     color_scale="rmsd",
 )
 
-AF2_DEFAULT_IPAE = NumericGlobalDescriptor(
+AF2_PRIMARY_IPAE = NumericGlobalDescriptor(
     name="AF2 iPAE",
     description="AlphaFold2 interaction PAE, predicted aligned error of quadrants of the PAE matrix corresponding to all pairs of residues between the interacting chains (in Angstrom)",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|ipae",
+    key="refolding|af2_primary|ipae",
     min_value=0,
     comparison="lower_is_better",
     color_scale="pae",
 )
 
-AF2_DEFAULT_IPTM = NumericGlobalDescriptor(
+AF2_PRIMARY_IPTM = NumericGlobalDescriptor(
     name="AF2 ipTM score",
     description="AlphaFold2 interface predicted TM score (0 = worst, 1 = best) based on all pairs of residues between the interacting chains",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|iptm",
+    key="refolding|af2_primary|iptm",
     min_value=0,
     max_value=1,
     comparison="higher_is_better",
 )
 
-AF2_DEFAULT_BINDER_PAE = NumericGlobalDescriptor(
+AF2_PRIMARY_BINDER_PAE = NumericGlobalDescriptor(
     name="AF2 Binder PAE",
     description="Predicted aligned error of the binder chain (in Angstrom)",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|binder_pae",
+    key="refolding|af2_primary|binder_pae",
     min_value=0,
     comparison="lower_is_better",
     color_scale="pae",
 )
 
-AF2_DEFAULT_PLDDT_BINDER = NumericGlobalDescriptor(
+AF2_PRIMARY_PLDDT_BINDER = NumericGlobalDescriptor(
     name="AF2 Binder pLDDT",
     description="Average pLDDT confidence score of the binder chain (0 = worst, 100 = best)",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|binder_plddt",
+    key="refolding|af2_primary|binder_plddt",
     min_value=0,
     max_value=100,
     comparison="higher_is_better",
     color_scale="plddt",
 )
 
-AF2_DEFAULT_DESIGN_RMSD = NumericGlobalDescriptor(
+AF2_PRIMARY_DESIGN_RMSD = NumericGlobalDescriptor(
     name="AF2 Design RMSD",
     description="Aligned RMSD between the backbone of the designed structure and its AF2 prediction",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|design_backbone_rmsd",
+    key="refolding|af2_primary|design_backbone_rmsd",
     min_value=0,
     comparison="lower_is_better",
     color_scale="rmsd",
 )
 
-AF2_DEFAULT_NATIVE_MOTIF_RMSD = NumericGlobalDescriptor(
+AF2_PRIMARY_NATIVE_MOTIF_RMSD = NumericGlobalDescriptor(
     name="AF2 Native Motif RMSD",
     description="Aligned RMSD between all atoms of the fixed input motif and its AF2 prediction",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|native_motif_rmsd",
+    key="refolding|af2_primary|native_motif_rmsd",
     min_value=0,
     comparison="lower_is_better",
     color_scale="rmsd",
 )
 
-AF2_DEFAULT_PTM = NumericGlobalDescriptor(
+AF2_PRIMARY_PTM = NumericGlobalDescriptor(
     name="AF2 pTM score",
     description="Predicted TM score of the full structure (0 = worst, 1 = best)",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|ptm",
+    key="refolding|af2_primary|ptm",
     min_value=0,
     max_value=1,
     comparison="higher_is_better",
 )
 
 
-AF2_DEFAULT_PAE = NumericGlobalDescriptor(
+AF2_PRIMARY_PAE = NumericGlobalDescriptor(
     name="AF2 PAE",
     description="Average predicted absolute error of the whole structure (in Angstrom)",
     unit="Å",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|pae",
+    key="refolding|af2_primary|pae",
     min_value=0,
     comparison="lower_is_better",
     color_scale="pae",
 )
 
-AF2_DEFAULT_PLDDT = NumericGlobalDescriptor(
+AF2_PRIMARY_PLDDT = NumericGlobalDescriptor(
     name="AF2 pLDDT",
     description="Average pLDDT score of the whole structure (0 = worst, 100 = best)",
     tool="AF2 Initial Guess",
-    key="refolding|af2_default|plddt",
+    key="refolding|af2_primary|plddt",
     min_value=0,
     max_value=100,
     comparison="higher_is_better",
@@ -252,26 +252,26 @@ AF2_DEFAULT_PLDDT = NumericGlobalDescriptor(
 
 
 # Initial guess descriptors
-AF2_DEFAULT_DESCRIPTORS = [
+AF2_PRIMARY_DESCRIPTORS = [
     # shared
-    AF2_DEFAULT_IPAE,
-    AF2_DEFAULT_IPTM,
-    AF2_DEFAULT_PTM,
+    AF2_PRIMARY_IPAE,
+    AF2_PRIMARY_IPTM,
+    AF2_PRIMARY_PTM,
     # binder
-    AF2_DEFAULT_BINDER_PAE,
-    AF2_DEFAULT_PLDDT_BINDER,
-    AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD,
+    AF2_PRIMARY_BINDER_PAE,
+    AF2_PRIMARY_PLDDT_BINDER,
+    AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD,
     # scaffold
-    AF2_DEFAULT_DESIGN_RMSD,
-    AF2_DEFAULT_NATIVE_MOTIF_RMSD,
-    AF2_DEFAULT_PAE,
-    AF2_DEFAULT_PLDDT,
+    AF2_PRIMARY_DESIGN_RMSD,
+    AF2_PRIMARY_NATIVE_MOTIF_RMSD,
+    AF2_PRIMARY_PAE,
+    AF2_PRIMARY_PLDDT,
 ]
-AF2_STRUCTURE_PATHS = [AF2_DEFAULT_STRUCTURE_PATH]
+AF2_STRUCTURE_PATHS = [AF2_PRIMARY_STRUCTURE_PATH]
 
 
 # Refolding
-REFOLDING_DESCRIPTORS = [*ESMFOLD_DESCRIPTORS, *AF2_DEFAULT_DESCRIPTORS, ESMFOLD_STRUCTURE_PATH, *AF2_STRUCTURE_PATHS]
+REFOLDING_DESCRIPTORS = [*ESMFOLD_DESCRIPTORS, *AF2_PRIMARY_DESCRIPTORS, ESMFOLD_STRUCTURE_PATH, *AF2_STRUCTURE_PATHS]
 
 
 for test, (label, description) in REFOLDING_TESTS_SCAFFOLD.items():
@@ -350,8 +350,8 @@ for test, (label, description) in REFOLDING_TESTS_SCAFFOLD.items():
 for test, (label, description) in REFOLDING_TESTS_BINDER.items():
     REFOLDING_DESCRIPTORS += [
         NumericGlobalDescriptor(
-            name="AF2 Binder RMSD",
-            description=f"Target-aligned binder RMSD between design and AF2 prediction using {description}",
+            name="AF2 Target-aligned Binder RMSD",
+            description=f"Target-aligned binder RMSD between Ca backbone atoms of design and AF2 prediction using {description}",
             unit="Å",
             tool=f"AlphaFold2 ({label})",
             key=f"refolding|{test}|target_aligned_binder_rmsd",
@@ -414,13 +414,13 @@ DESCRIPTORS = REFOLDING_DESCRIPTORS
 PRESETS = [
     {
         "label": "AF2 PAE & RMSD",
-        "x": AF2_DEFAULT_PAE,
-        "y": AF2_DEFAULT_DESIGN_RMSD,
+        "x": AF2_PRIMARY_PAE,
+        "y": AF2_PRIMARY_DESIGN_RMSD,
     },
     {
-        "label": "AF2 Binder PAE & RMSD",
-        "x": AF2_DEFAULT_IPAE,
-        "y": AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD,
+        "label": "AF2 iPAE & RMSD",
+        "x": AF2_PRIMARY_IPAE,
+        "y": AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD,
     },
     {
         "label": "ESMFold PAE & RMSD",

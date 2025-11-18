@@ -16,29 +16,31 @@ from ovo.core.aws import AWSSessionManager
 from ovo.core.utils.formatting import get_hashed_path_for_bytes
 
 
-class StorageCache:
+class Storage:
+    """Class for managing file storage in local filesystem or S3 bucket"""
+
     def __init__(
         self,
+        storage_root: str,
+        aws: AWSSessionManager | None,
+        verbose: bool = False,
         memory_cache_limit_bytes=50 * 1024 * 1024,
         disk_cache_limit_bytes=200 * 1024 * 1024,
         memory_cache_limit_per_file_bytes=5 * 1024 * 1024,
     ):
+        self.storage_root: str = storage_root
+        self.aws: AWSSessionManager | None = aws
+        self.verbose = verbose
+        # caching
         self.memory_cache_limit = memory_cache_limit_bytes
         self.disk_cache_limit = disk_cache_limit_bytes
         self.memory_cache_limit_per_file_bytes = memory_cache_limit_per_file_bytes
-
-        # caching
         self._cache_memory = OrderedDict()  # LRU cache for memory
         self._cache_disk = OrderedDict()  # LRU cache for disk
         self.memory_cache_size = 0
         self.disk_cache_size = 0
         self._temp_dir = tempfile.TemporaryDirectory()
         weakref.finalize(self, self._clear_temp_dir)
-
-    @staticmethod
-    def parse_path(path: str) -> tuple[str, str, str]:
-        parsed = urlparse(str(path), allow_fragments=False)
-        return parsed.scheme, parsed.netloc, parsed.path.lstrip("/")
 
     def _clear_temp_dir(self):
         self._temp_dir.cleanup()
@@ -84,13 +86,10 @@ class StorageCache:
             self.disk_cache_size -= os.path.getsize(old_disk_path)
             os.remove(old_disk_path)
 
-
-class Storage(StorageCache):
-    def __init__(self, storage_root: str, aws: AWSSessionManager | None, verbose: bool = False):
-        super().__init__()
-        self.storage_root: str = storage_root
-        self.aws: AWSSessionManager | None = aws
-        self.verbose = verbose
+    @staticmethod
+    def parse_path(path: str) -> tuple[str, str, str]:
+        parsed = urlparse(str(path), allow_fragments=False)
+        return parsed.scheme, parsed.netloc, parsed.path.lstrip("/")
 
     def list_dir(self, abs_path: str, only_dir=False, recursive=False) -> list[str]:
         """List all files in the directory, return list of paths relative to provided path
@@ -314,6 +313,41 @@ class Storage(StorageCache):
         :param overwrite: if True, overwrite the file if it exists
         """
         return self.store_file_bytes(file_str.encode(), storage_rel_path, overwrite=overwrite)
+
+    def store_input(
+        self,
+        project_id: str,
+        file_path: str = None,
+        file_bytes: bytes = None,
+        file_str: str = None,
+        filename: str = None,
+        overwrite: bool = True,
+    ) -> str:
+        """Store the file string in the source filesystem or source S3 bucket
+
+        :param project_id: project ID
+        :param file_path: path to the source file (when loading from path)
+        :param file_bytes: file bytes to store (when loading from bytes)
+        :param file_str: file string to store (when loading from string)
+        :param filename: filename to use when storing the file (required when loading from bytes or string)
+        :param overwrite: if True, overwrite the file if it exists
+        """
+        if file_path:
+            assert file_bytes is None and file_str is None, "Provide only one of file_path, file_bytes, or file_str"
+            if filename is None:
+                filename = os.path.basename(file_path)
+            # consider the input path to be relative to current dir, not the storage dir (useful in Jupyter)
+            file_path = os.path.abspath(file_path)
+            file_bytes = self.read_file_bytes(file_path)
+        elif file_bytes is not None:
+            assert file_str is None, "Provide only one of file_bytes or file_str"
+            assert filename is not None, "filename must be provided when loading from bytes"
+        elif file_str is not None:
+            assert filename is not None, "filename must be provided when loading from string"
+            file_bytes = file_str.encode()
+        hash_str = get_hashed_path_for_bytes(file_bytes)
+        storage_rel_path = os.path.join("project", project_id, "inputs", hash_str, filename)
+        return self.store_file_bytes(file_bytes, storage_rel_path, overwrite=overwrite)
 
     def create_zip(self, storage_paths_by_dir: dict[str, list[str]]) -> bytes:
         """Create zip file

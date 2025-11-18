@@ -241,11 +241,11 @@ def show_rfdiffusion_advanced_settings(workflow: RFdiffusionWorkflow):
 
         st.markdown("#### RFdiffusion")
 
-        workflow.rfdiffusion_params.iterations = st.number_input(
-            "Num RFdiffusion iterations (T)",
+        workflow.rfdiffusion_params.timesteps = st.number_input(
+            "Num RFdiffusion timesteps (T)",
             min_value=1,
-            value=workflow.rfdiffusion_params.iterations,
-            key="iterations",
+            value=workflow.rfdiffusion_params.timesteps,
+            key="timesteps",
         )
         st.caption(
             ":material/info: Number of denoising diffusion steps determines the granularity of the diffusion process. "

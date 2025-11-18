@@ -26,12 +26,12 @@ from ovo.core.scheduler.base_scheduler import Scheduler
 
 def submit_rfdiffusion_preview(
     workflow: RFdiffusionWorkflow,
-    iterations: int,
+    timesteps: int,
     partial_diffusion: bool = False,
     pipeline_name="rfdiffusion-backbone",
     **submission_args,
 ) -> str | None:
-    """Run the RFdiffusion workflow with reduced number of diffuser iterations."""
+    """Run the RFdiffusion workflow with reduced number of diffuser timesteps."""
 
     contig = workflow.get_contig()
     hotspots = workflow.get_hotspots()
@@ -44,9 +44,9 @@ def submit_rfdiffusion_preview(
     run_parameters = []
 
     if partial_diffusion:
-        run_parameters.append(f"diffuser.partial_T={iterations}")
+        run_parameters.append(f"diffuser.partial_T={timesteps}")
     else:
-        run_parameters.append(f"diffuser.T={iterations}")
+        run_parameters.append(f"diffuser.T={timesteps}")
 
     params = {
         "contig": contig,
@@ -65,27 +65,6 @@ def submit_rfdiffusion_preview(
         submission_args=submission_args,
     )
     return preview_job_id
-
-
-def submit_rfdiffusion_workflow(workflow: RFdiffusionWorkflow, scheduler: Scheduler, pipeline_name=None) -> str:
-    workflow.validate()
-
-    params = get_rfdiffusion_shared_workflow_params(workflow, scheduler)
-
-    if workflow.refolding_params.esmfold_fp16:
-        params["esmfold_fp16"] = True
-
-    # Set specific parameters for binder / scaffold design
-    if workflow.is_instance(RFdiffusionBinderDesignWorkflow):
-        params["design_type"] = "binder"
-    elif workflow.is_instance(RFdiffusionScaffoldDesignWorkflow):
-        params["design_type"] = "scaffold"
-    else:
-        raise ValueError(f"Unknown workflow type: {workflow.name}")
-
-    job_id = scheduler.submit(pipeline_name=pipeline_name or "rfdiffusion-end-to-end", params=params)
-
-    return job_id
 
 
 def process_workflow_results(job: DesignJob, callback: Callable = None):
@@ -181,7 +160,7 @@ def process_workflow_results(job: DesignJob, callback: Callable = None):
     if workflow.refolding_params.primary_test:
         # Store refolding results under the same set of Descriptor objects to simplify downstream analysis
         if workflow.refolding_params.primary_test.startswith("af2_"):
-            descriptor_key_prefix = "refolding|af2_default"
+            descriptor_key_prefix = "refolding|af2_primary"
         else:
             descriptor_key_prefix = f"refolding|{workflow.refolding_params.primary_test}"
         # tool_key -> filename
@@ -303,7 +282,7 @@ def process_rfdiffusion_design(
         if alphafold_file_suffix:
             descriptor_values.append(
                 DescriptorValue(
-                    descriptor_key=descriptors_refolding.AF2_DEFAULT_STRUCTURE_PATH.key,
+                    descriptor_key=descriptors_refolding.AF2_PRIMARY_STRUCTURE_PATH.key,
                     value=storage.store_file_path(
                         source_abs_path=os.path.join(
                             source_output_path,
@@ -339,11 +318,9 @@ def process_rfdiffusion_design(
     return designs, design_id_mapping, descriptor_values
 
 
-def get_rfdiffusion_shared_workflow_params(workflow: RFdiffusionWorkflow, scheduler: Scheduler) -> dict:
+def prepare_rfdiffusion_workflow_params(workflow: RFdiffusionWorkflow, workdir: str) -> dict:
     # prepare pdb file or txt file with multiple pdb paths
-    workflow_input_path = storage.prepare_workflow_inputs(
-        workflow.rfdiffusion_params.input_pdb_paths, workdir=scheduler.workdir
-    )
+    workflow_input_path = storage.prepare_workflow_inputs(workflow.rfdiffusion_params.input_pdb_paths, workdir=workdir)
     params = {
         "batch_size": workflow.rfdiffusion_params.batch_size,
         "rfdiffusion_input_pdb": workflow_input_path,
@@ -351,6 +328,7 @@ def get_rfdiffusion_shared_workflow_params(workflow: RFdiffusionWorkflow, schedu
         "rfdiffusion_contig": ",".join(workflow.rfdiffusion_params.contigs),
         "rfdiffusion_run_parameters": get_rfdiffusion_run_parameters(workflow),
         "refolding_tests": workflow.refolding_params.primary_test,
+        "design_type": workflow.get_refolding_design_type(),
     }
 
     if workflow.rfdiffusion_params.backbone_filters:
@@ -387,15 +365,18 @@ def get_rfdiffusion_shared_workflow_params(workflow: RFdiffusionWorkflow, schedu
         hotspots = ",".join(workflow.rfdiffusion_params.hotspots.replace(",", " ").split())
         params["hotspot"] = hotspots
 
+    if workflow.refolding_params.esmfold_fp16:
+        params["esmfold_fp16"] = True
+
     return params
 
 
 def get_rfdiffusion_run_parameters(workflow: RFdiffusionWorkflow) -> str:
     args = ""
     if workflow.rfdiffusion_params.partial_diffusion:
-        args += f" diffuser.partial_T={workflow.rfdiffusion_params.iterations} "
+        args += f" diffuser.partial_T={workflow.rfdiffusion_params.timesteps} "
     else:
-        args += f" diffuser.T={workflow.rfdiffusion_params.iterations} "
+        args += f" diffuser.T={workflow.rfdiffusion_params.timesteps} "
 
     if workflow.rfdiffusion_params.contigmap_length:
         length_range = (

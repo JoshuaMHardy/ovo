@@ -24,7 +24,7 @@ def test_export_import_cycle(example_pdb_path):
 
     # Create a test project with some data
     test_project = Project(
-        id="test_export_import_project", name="Test Export Import Project", author="test_user", public=False
+        id="test_export_import_project", name="Test Export Import Project", author="test_user", public=False,
     )
     db.save(test_project)
 
@@ -89,9 +89,13 @@ def test_export_import_cycle(example_pdb_path):
         assert not db.count(Design, id=test_design.id), "Design should be deleted"
 
         # Extract ZIP file
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory() as temp_root:
             with zipfile.ZipFile(export_zip_path, "r") as zipf:
-                zipf.extractall(temp_dir)
+                zipf.extractall(temp_root)
+
+            paths = os.listdir(temp_root)
+            assert len(paths) == 1, "There should be one top-level directory in the export, got: " + str(paths)
+            temp_dir = os.path.join(temp_root, paths[0])
 
             # Remove zip file
             os.unlink(export_zip_path)
@@ -109,7 +113,7 @@ def test_export_import_cycle(example_pdb_path):
         imported_project = db.get(Project, test_project.id)
         assert imported_project.name == "Test Export Import Project"
         assert imported_project.author == "test_user"
-        assert imported_project.public == False
+        assert imported_project.public == True, "Project should become public upon export"
 
         imported_round = db.get(Round, test_round.id)
         assert imported_round.name == "Test Round"
@@ -181,9 +185,12 @@ def test_import_id_conflicts():
     try:
         # Attempt to import while the project still exists (should fail)
         with pytest.raises(ValueError, match="Project already exists in the database: Test Conflict Project .*"):
-            with tempfile.TemporaryDirectory() as temp_dir:
+            with tempfile.TemporaryDirectory() as temp_root:
                 with zipfile.ZipFile(export_zip_path, "r") as zipf:
-                    zipf.extractall(temp_dir)
+                    zipf.extractall(temp_root)
+                    paths = os.listdir(temp_root)
+                    assert len(paths) == 1, "There should be one top-level directory in the export, got: " + str(paths)
+                    temp_dir = os.path.join(temp_root, paths[0])
                     import_project(temp_dir, test_project.id)
 
     finally:

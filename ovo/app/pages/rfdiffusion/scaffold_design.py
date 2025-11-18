@@ -93,9 +93,9 @@ analyzed in the {designs_page.title} page.
 ##### Refolding metrics
 
 - **AlphaFold2 initial guess<sup>[3][7][8]</sup>**
-    - **{descriptors_refolding.AF2_DEFAULT_PAE.name}** — Predicted Aligned Error <sup>[9]</sup> averaged over the residue–residue matrix, the lower the more confident the model is about overall design. <sup>*</sup>
-    - **{descriptors_refolding.AF2_DEFAULT_DESIGN_RMSD.name}** — Cα RMSD between RFdiffusion output and AF2 prediction, measuring the agreement between the design method and the structure prediction method.
-    - **{descriptors_refolding.AF2_DEFAULT_NATIVE_MOTIF_RMSD.name}** — All-atom RMSD between motif in your input structure and the motif as predicted by AF2, ensuring the original motif was neither disrupted by RFdiffusion or by the AlphaFold2 prediction.
+    - **{descriptors_refolding.AF2_PRIMARY_PAE.name}** — Predicted Aligned Error <sup>[9]</sup> averaged over the residue–residue matrix, the lower the more confident the model is about overall design. <sup>*</sup>
+    - **{descriptors_refolding.AF2_PRIMARY_DESIGN_RMSD.name}** — Cα RMSD between RFdiffusion output and AF2 prediction, measuring the agreement between the design method and the structure prediction method.
+    - **{descriptors_refolding.AF2_PRIMARY_NATIVE_MOTIF_RMSD.name}** — All-atom RMSD between motif in your input structure and the motif as predicted by AF2, ensuring the original motif was neither disrupted by RFdiffusion or by the AlphaFold2 prediction.
 - **ESMFold (if enabled)**
     - **{descriptors_refolding.ESMFOLD_PAE.name}** — as in AF2 PAE
     - **{descriptors_refolding.ESMFOLD_DESIGN_BACKBONE_RMSD.name}** - Cα RMSD between whole RFdiffusion output and ESMFold prediction
@@ -245,30 +245,30 @@ def contig_preview_step():
     help_column = st.columns([2, 1])[0]
 
     with st.columns(3)[0]:
-        if "preview_iterations" not in st.session_state:
-            st.session_state.preview_iterations = 5
-        new_iterations = st.slider(
-            "Num RFdiffusion iterations (T)",
+        if "preview_timesteps" not in st.session_state:
+            st.session_state.preview_timesteps = 5
+        new_timesteps = st.slider(
+            "Num RFdiffusion timesteps (T)",
             min_value=1,
             max_value=20,
-            value=st.session_state.preview_iterations,
-            key="iterations_input",
+            value=st.session_state.preview_timesteps,
+            key="timesteps_input",
         )
-        if new_iterations and new_iterations != st.session_state.preview_iterations:
-            st.session_state.preview_iterations = new_iterations
+        if new_timesteps and new_timesteps != st.session_state.preview_timesteps:
+            st.session_state.preview_timesteps = new_timesteps
             # Clear previous preview if settings changed
             workflow.preview_job_id = None
 
     with help_column:
         st.write(f"""
-        Generate a quick RFdiffusion preview of the design with reduced number of iterations
-        ({st.session_state.preview_iterations}/50) to verify your inputs. This step is optional.
+        Generate a quick RFdiffusion preview of the design with reduced number of timesteps
+        ({st.session_state.preview_timesteps}/50) to verify your inputs. This step is optional.
 
         This should take from 30 seconds to a few minutes depending on the length of the protein.
         """)
 
     if st.button(":material/wand_stars: Generate preview"):
-        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, iterations=st.session_state.preview_iterations)
+        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, timesteps=st.session_state.preview_timesteps)
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:

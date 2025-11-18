@@ -18,7 +18,7 @@ from ovo.app.utils.cached_db import (
     get_cached_pool,
 )
 from ovo.core.database import Design, DesignWorkflow, NumericDescriptor, Descriptor
-from ovo.core.database.descriptors_refolding import AF2_DEFAULT_IPAE, AF2_DEFAULT_IPTM
+from ovo.core.database.descriptors_refolding import AF2_PRIMARY_IPAE, AF2_PRIMARY_IPTM
 from ovo.core.database.descriptors_rfdiffusion import (
     INTERFACE_TARGET_RESIDUES,
     N_CONTACTS_TO_INTERFACE,
@@ -45,8 +45,8 @@ INTERFACE_DESCRIPTORS_PYROSETTA = [
 ]
 
 INTERFACE_DESCRIPTORS_AF2 = [
-    AF2_DEFAULT_IPAE,
-    AF2_DEFAULT_IPTM,
+    AF2_PRIMARY_IPAE,
+    AF2_PRIMARY_IPTM,
 ]
 
 ALL_INTERFACE_DESCRIPTORS = INTERFACE_DESCRIPTORS_BACKBONE + INTERFACE_DESCRIPTORS_PYROSETTA + INTERFACE_DESCRIPTORS_AF2

@@ -21,7 +21,7 @@ def test_binder_default_end_to_end_logic(project_data):
             input_pdb_paths=[RESOURCES_DIR / "examples/inputs/5ELI_A.pdb"],
             contigs=["A74-97/0 20"],
             num_designs=1,
-            iterations=15,  # use 15 diffusion iterations for faster testing
+            timesteps=15,  # use 15 diffusion timesteps for faster testing
         ),
         protein_mpnn_params=ProteinMPNNParams(
             num_sequence_designs=1,
@@ -62,6 +62,6 @@ def test_binder_default_end_to_end_logic(project_data):
     assert len(rag) == 2
     assert (rag > 0).all()
 
-    af2_ipae = db.select_descriptor_values(descriptors_refolding.AF2_DEFAULT_IPAE.key, design_ids)
+    af2_ipae = db.select_descriptor_values(descriptors_refolding.AF2_PRIMARY_IPAE.key, design_ids)
     assert len(af2_ipae) == 2
     assert (af2_ipae < 30).all()

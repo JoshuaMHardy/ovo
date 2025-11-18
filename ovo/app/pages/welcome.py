@@ -29,7 +29,7 @@ The project dropdown in the left sidebar allows you to organize your jobs and de
 Jobs in each project can be organized into *rounds*.
 
 The ⏳ *Jobs* page shows all running and finished jobs neatly together with their workflow parameters. 
-In each *job result* page, you can explore all generated designs and their descriptors such as AlphaFold2 RMSD and PyRosetta ddG. 
+In each *job result* page, you can explore all generated designs and their descriptors such as AlphaFold2 RMSD and Rosetta ddG. 
 You will be able to adjust *acceptance thresholds* to find the most promising designs we call *accepted designs*.
 
 The 🐣 *Designs* page focuses further on the *accepted designs*. The 🔵 *Explorer* view enables plotting

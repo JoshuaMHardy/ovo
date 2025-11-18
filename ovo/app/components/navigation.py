@@ -305,43 +305,52 @@ def design_navigation_selector(
         str: Currently selected design_id
     """
     # Get current index from query params
-    idx = design_ids.index(st.query_params[key]) if key in st.query_params and st.query_params[key] in design_ids else 0
+    if key in st.query_params and st.query_params[key] in design_ids:
+        idx = design_ids.index(st.query_params[key])
+        element_key = f"{key}_selectbox_{idx}"
+        if element_key in st.session_state and st.session_state[element_key] in design_ids:
+            idx = design_ids.index(st.session_state[element_key])
+    else:
+        idx = 0
+    element_key = f"{key}_selectbox_{idx}"
 
-    # FIXME: The arrows actually do not work
-    prev_col, next_col, selection_col = st.columns([0.05, 0.05, 0.9])
-
-    with prev_col:
-        previous_btn = st.button(
+    with st.container(horizontal=True):
+        if st.button(
             ":material/arrow_back_ios:",
             key=f"previous_design_btn_{key}",
-            help="Previous design",
-            width="stretch",
-        )
-        if previous_btn:
+            width="content",
+            disabled=idx == 0,
+        ):
             idx = previous_design_idx(idx)
+            element_key = f"{key}_selectbox_{idx}"
 
-    with next_col:
-        next_btn = st.button(
+        # TODO not sure how else to format other than using a button
+        st.button(
+            f"{idx + 1} / {len(design_ids):,}",
+            type="tertiary",
+            key="no_action",
+            width="content",
+            disabled=True,
+        )
+
+        if st.button(
             ":material/arrow_forward_ios:",
             key=f"next_design_btn_{key}",
-            help="Next design",
-            width="stretch",
-        )
-        if next_btn:
+            width="content",
+            disabled=idx == len(design_ids) - 1,
+        ):
             idx = next_design_idx(idx, len(design_ids) - 1)
+            element_key = f"{key}_selectbox_{idx}"
 
-    with selection_col:
-        if labels_by_design_id:
-            format_func = lambda design_id: f"{design_id} | {labels_by_design_id.get(design_id, '')}"
-        else:
-            format_func = lambda design_id: design_id
         design_id = st.selectbox(
             "Select a design",
             options=design_ids,
             label_visibility="collapsed",
-            key=f"{key}_selectbox_{idx}",  # we add idx to force re-creating the component when idx changes
+            key=element_key,  # we add idx to force re-creating the component when idx changes
             index=idx,
-            format_func=format_func,
+            format_func=lambda design_id: f"{design_id}"
+            + (f" | {labels_by_design_id.get(design_id, '')}" if labels_by_design_id else ""),
+            width="stretch",
         )
         st.query_params[key] = design_id
 

@@ -31,7 +31,8 @@ def load_histograms() -> Dict[str, Dict[str, Dict[str, List[float]]]]:
         "mdanalysis",
         "peppatch",
     ]:
-        histograms.update(load_plots_data(f"histograms/pdb/{toolname}_q01_q99.json"))
+        data = load_plots_data(f"histograms/pdb/{toolname}_q01_q99.json")
+        histograms.update({f"proteinqc|{key}": value for key, value in data.items()})
     return histograms
 
 

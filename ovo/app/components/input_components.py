@@ -60,7 +60,8 @@ def pdb_input_component(old_pdb_code: str | None) -> tuple[str, bytes] | None:
         return filename, pdb_input_bytes
 
     elif new_pdb_code and new_pdb_code != old_pdb_code:
-        return new_pdb_code, get_pdb(new_pdb_code, out="bytes")
+        with st.spinner(f"Downloading PDB {new_pdb_code}"):
+            return new_pdb_code, get_pdb(new_pdb_code)
 
     return None
 

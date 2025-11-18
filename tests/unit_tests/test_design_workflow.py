@@ -1,5 +1,6 @@
 from unittest.mock import ANY
 
+from ovo.core.logic import design_logic
 from ovo.core.utils.resources import RESOURCES_DIR
 from ovo.core.database.models_rfdiffusion import (
     RFdiffusionScaffoldDesignWorkflow,
@@ -10,7 +11,7 @@ from ovo.core.database.models_rfdiffusion import (
 from tests.unit_tests.utils.mocking import MockScheduler
 
 
-def test_rfdiffusion_scaffold_design_workflow_mock_submit():
+def test_rfdiffusion_scaffold_design_workflow_get_params():
     from ovo import local_scheduler
 
     workflow = RFdiffusionScaffoldDesignWorkflow(
@@ -18,7 +19,7 @@ def test_rfdiffusion_scaffold_design_workflow_mock_submit():
             input_pdb_paths=[RESOURCES_DIR / "examples/inputs/5ELI_A.pdb"],
             num_designs=1,
             contigs=["A111-114/10/A117-119"],
-            iterations=1,
+            timesteps=1,
             run_parameters="inference.deterministic=True",
         ),
         protein_mpnn_params=ProteinMPNNParams(
@@ -30,21 +31,15 @@ def test_rfdiffusion_scaffold_design_workflow_mock_submit():
         ),
     )
 
-    local_scheduler.submit.reset_mock()
-    job_id = workflow.submit(local_scheduler)
-    assert job_id is not None
     assert isinstance(local_scheduler, MockScheduler), "Expected mock scheduler in test initialized by conftest.py"
-    local_scheduler.submit.assert_called_once_with(
-        pipeline_name="rfdiffusion-end-to-end",
-        params=dict(
-            design_type="scaffold",
-            rfdiffusion_input_pdb=ANY,
-            rfdiffusion_num_designs=1,
-            rfdiffusion_contig="A111-114/10/A117-119",
-            rfdiffusion_run_parameters=" diffuser.T=1  inference.deterministic=True ",
-            mpnn_num_sequences=1,
-            mpnn_run_parameters='--omit_AA "CX" --temperature 0.01',
-            refolding_tests="esmfold",
-            batch_size=100,
-        ),
+    assert workflow.prepare_params(workdir=local_scheduler.workdir) == dict(
+        design_type="scaffold",
+        rfdiffusion_input_pdb=ANY,
+        rfdiffusion_num_designs=1,
+        rfdiffusion_contig="A111-114/10/A117-119",
+        rfdiffusion_run_parameters=" diffuser.T=1  inference.deterministic=True ",
+        mpnn_num_sequences=1,
+        mpnn_run_parameters='--omit_AA "CX" --temperature 0.01',
+        refolding_tests="esmfold",
+        batch_size=100,
     )

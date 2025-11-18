@@ -67,7 +67,7 @@ validation.
     - Designs — binder sequences and structures in complex with target protein
     - Design descriptors
         - Refolding metrics
-        - PyRosetta descriptors
+        - Rosetta descriptors
         - Backbone metrics
         - Sequence composition
             
@@ -79,7 +79,7 @@ or you can leave it blank to allow binding anywhere on the target surface.
 Next, you'll be asked to trim the protein chain. Runtime scales quadratically with the
 number of residues in the input structure, so trimming the protein to relevant regions (e.g. around a hotspot, if specified) 
 will speed up the design process. After specifying the desired binder length range, you can optionally generate 
-a quick RFdiffusion preview of the design with reduced number of iterations to verify your inputs.
+a quick RFdiffusion preview of the design with reduced number of timesteps to verify your inputs.
 Finally, you will set the number of designs to generate and optional advanced settings and submit the workflow.
 
 Once the workflow has finished, all designs are saved to the OVO *storage* and registered in the OVO *database*.
@@ -103,17 +103,17 @@ analyzed in the {designs_page.title} page. For example, you can run ProteinQC to
 - Sequence entropy, highlighting repetitive sequences
 - And more; computed using BioPython ProteinAnalysis<sup>[4]</sup>
 
-#### PyRosetta descriptors<sup>[2]</sup>
-- **{descriptors_rfdiffusion.PYROSETTA_DDG.name}** — PyRosetta binding energy of the complex (in Rosetta energy units). Lower (negative) values indicate better binding affinity.
-- **{descriptors_rfdiffusion.PYROSETTA_CMS.name}** — PyRosetta molecular surface area (in square angstroms).
+#### Rosetta descriptors<sup>[2]</sup>
+- **{descriptors_rfdiffusion.PYROSETTA_DDG.name}** — Rosetta binding energy of the complex (in Rosetta energy units). Lower (negative) values indicate better binding affinity.
+- **{descriptors_rfdiffusion.PYROSETTA_CMS.name}** — Rosetta molecular surface area (in square angstroms).
 - **{descriptors_rfdiffusion.PYROSETTA_SAP_SCORE.name}** — Evaluates hydrophobicity of surface exposed regions. Positive values indicate hydrophobic molecules.
 
 #### AlphaFold2 initial guess refolding metrics<sup>[2][3][5]</sup>
-- **{descriptors_refolding.AF2_DEFAULT_IPAE.name}** — Binder–target pose error (predicted) in angstroms. Predicted Aligned Error (residue–residue 
+- **{descriptors_refolding.AF2_PRIMARY_IPAE.name}** — Binder–target pose error (predicted) in angstroms. Predicted Aligned Error (residue–residue 
     matrix) averaged over binder→target residue values.
-- **{descriptors_refolding.AF2_DEFAULT_TARGET_ALIGNED_BINDER_RMSD.name}** — Cα RMSD of the binder between RFdiffusion output and AF2 prediction (aligned on target).
+- **{descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.name}** — Cα RMSD of the binder between RFdiffusion output and AF2 prediction (aligned on target).
   This measures how much the designed binder structure agrees with its AF2 prediction.
-- **{descriptors_refolding.AF2_DEFAULT_BINDER_PAE.name}** — Binder error (predicted) including the binder–target pose, in angstroms. Predicted Aligned Error 
+- **{descriptors_refolding.AF2_PRIMARY_BINDER_PAE.name}** — Binder error (predicted) including the binder–target pose, in angstroms. Predicted Aligned Error 
     <sup>[5]]</sup> (residue–residue matrix) averaged over binder→binder and binder→target residue values.
 
 We also include AF2 binder pLDDT and pTM scores. In RFdiffusion<sup>[1]</sup> in silico success for binder design was
@@ -281,17 +281,17 @@ def preview_step():
 
     # Generate preview
     st.write("#### Generate preview")
-    num_iterations = 15
+    num_timesteps = 15
     with st.columns([2, 1])[0]:
         st.write(f"""
-        Generate a quick RFdiffusion preview of the design with reduced number of iterations 
-        ({num_iterations}/50) to verify your inputs. This step is optional.
+        Generate a quick RFdiffusion preview of the design with reduced number of timesteps 
+        ({num_timesteps}/50) to verify your inputs. This step is optional.
         
         This should take 2-10 minutes depending on the length of the target and binder.
         """)
 
     if st.button(":material/wand_stars: Generate preview"):
-        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, iterations=num_iterations)
+        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, timesteps=num_timesteps)
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:

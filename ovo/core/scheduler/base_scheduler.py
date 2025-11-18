@@ -24,17 +24,21 @@ class JobNotFound(Exception):
 
 
 class Scheduler(ABC):
-    def __init__(self, name: str, workdir: str, reference_files_dir: str, submission_args: dict = None):
+    def __init__(
+        self, name: str, workdir: str, reference_files_dir: str, allow_submit: bool = True, submission_args: dict = None
+    ):
         """
         Args:
             name: Human-readable label for this scheduler
             workdir: Absolute path to working directory for nextflow workflow execution (local filesystem path or S3 URI)
             reference_files_dir: Absolute path to directory with model weights and other reference files
+            allow_submit: Whether to allow job submission
             submission_args: Default submission arguments, can be overriden in submit method
         """
         self.name = name
         self.workdir = workdir
         self.reference_files_dir = reference_files_dir
+        self.allow_submit = allow_submit
         self.submission_args = submission_args or {}
 
     def submit(self, pipeline_name: str, params: dict = None, submission_args: dict = None) -> str:

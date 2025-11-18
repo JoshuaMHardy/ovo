@@ -56,14 +56,19 @@ class AuthConfig:
     # Users who can access Debug page and run commands on the server through the web UI
     admin_users: list[str] = field(default_factory=list)
     # Enable native Streamlit authentication
-    streamlit_auth: bool = False
+    streamlit_auth: bool = field(default=False)
     # Allow users to visit private projects if they have the link (containing the project UID)
     allow_private_project_link_access: bool = field(default=True)
+    # Hide admin access warning if admin_users is set but no auth is configured
+    hide_admin_warning: bool = field(default=False)
+    # Always generate a required token to access the app
+    always_require_token: bool = field(default=False)
 
 
 @dataclass
 class ConfigProps:
     pyrosetta_license: bool = False
+    read_only: bool = False
     rfdiffusion_backbones_limit: int = 1000
     rfdiffusion_backbones_limit_admin: int = 5000
     mpnn_sequences_limit: int = 100
@@ -136,8 +141,9 @@ class OVOConfig(BaseConfigModel):
         return self
 
     @classmethod
-    def default(cls, props: ConfigProps, default_profile="conda") -> str:
-        username = os.environ.get("USER", "unknown")
+    def default(cls, props: ConfigProps, default_profile=None, admin_users: list[str] = None) -> str:
+        if default_profile is None:
+            default_profile = "conda"
         props_rows = "\n".join(f"  {k}: {json.dumps(v)}" for k, v in props.__dict__.items())
         default_scheduler_key = f"local_{default_profile}"
         return f"""
@@ -147,7 +153,7 @@ db:
 reference_files_dir: ./reference_files
 nextflow_home: ./nextflow
 auth:
-  admin_users: ["{username}"]
+  admin_users: {json.dumps(admin_users or [])}
   allow_private_project_link_access: true
 storage:
   verbose: false
@@ -267,7 +273,10 @@ def load_config(home_dir: str) -> OVOConfig:
     if not os.path.exists(home_dir) or not os.path.exists(config_path):
         # Config dir does not exist yet, print error and exit
         if home_dir != DEFAULT_OVO_HOME:
-            raise OVOCliError(f"OVO config file not found in OVO_HOME: {home_dir}")
+            if not os.path.exists(home_dir):
+                raise OVOCliError(f"OVO_HOME directory does not exist: {home_dir}")
+            else:
+                raise OVOCliError(f"OVO config file not found in OVO_HOME: {home_dir}")
         else:
             raise OVONotInitializedError()
 
@@ -277,4 +286,23 @@ def load_config(home_dir: str) -> OVOConfig:
         data = yaml.safe_load(f)
         data["dir"] = os.path.abspath(home_dir)
 
-    return OVOConfig(**data)
+    config = OVOConfig(**data)
+
+    if config.props.read_only:
+        console.print("[blue][bold]Running in read-only mode[/bold] (configured in config.yml props.read_only)[/blue]")
+
+    return config
+
+
+def save_default_config(
+    home_dir, config_props: ConfigProps, default_profile: str = None, admin_users: list[str] = None
+) -> str:
+    config_path = os.path.join(home_dir, "config.yml")
+
+    with open(config_path, "w") as f:
+        f.write(OVOConfig.default(props=config_props, default_profile=default_profile, admin_users=admin_users))
+
+    with open(os.path.join(home_dir, "nextflow_local.config"), "w") as f:
+        f.write(OVOConfig.default_nextflow_config())
+
+    return config_path

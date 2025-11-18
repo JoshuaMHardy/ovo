@@ -33,14 +33,25 @@ def main(
 
     See `streamlit run --help` for more info.
     """
+    from ovo import config, console
 
     streamlit_script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "run_app.py")
-    sys.argv = ["streamlit", "run", streamlit_script_path] + streamlit_run_args.args
+    sys.argv = ["streamlit", "run", streamlit_script_path]
+    sys.argv.extend(["--browser.gatherUsageStats", "0"])  # disable streamlit usage stats
+    sys.argv.extend(streamlit_run_args.args)
 
-    if token:
+    if token or os.environ.get("OVO_LOGIN_TOKEN") or config.auth.always_require_token:
         token_value = os.environ.get("OVO_LOGIN_TOKEN", secrets.token_urlsafe(16))
         os.environ["OVO_LOGIN_TOKEN"] = token_value
-        print(f"OVO Login Token: {token_value}")
+        console.print(f"OVO Login Token: {token_value}")
+    elif config.auth.admin_users and not config.auth.streamlit_auth and not config.auth.hide_admin_warning:
+        console.print(
+            "[yellow]Warning:[/yellow] Running with admin mode enabled but no auth configured or token set, "
+            "anyone who can access the app will be able to run arbitrary commands on the server. "
+            "Run with --token to generate a token, use OVO_LOGIN_TOKEN env variable to set custom a login token, "
+            "or set auth.always_require_token: true in the OVO config to always generate a token. "
+            "Hide this message by setting auth.hide_admin_warning: true in the OVO config."
+        )
 
     runpy.run_module("streamlit", run_name="__main__")
 

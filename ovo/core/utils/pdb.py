@@ -857,47 +857,20 @@ def fix_contigs(contigs, parsed_pdb):
     return [fix_contig(x) for x in contigs]
 
 
-def get_pdb(pdb_code: str, base_path: str = "", out: str = "path"):
-    # Create the directory in case it does not exist
-    if base_path != "" and base_path is not None:
-        os.makedirs(base_path, exist_ok=True)
-
-    if os.path.isfile(os.path.join(base_path, pdb_code)):
-        # Skip download if file already exists
-        return os.path.join(base_path, f"{pdb_code}.pdb")
-    elif len(pdb_code) == 4:
-        base_url = f"https://files.rcsb.org/download/{pdb_code}.pdb1.gz"
+def get_pdb(pdb_code: str):
+    if len(pdb_code) == 4:
+        base_url = f"https://files.rcsb.org/download/{pdb_code}.pdb"
     else:
         base_url = f"https://alphafold.ebi.ac.uk/files/AF-{pdb_code.upper()}-F1-model_v3.pdb"
 
-    new_filename = os.path.join(base_path, f"{pdb_code}.pdb")
-    if not os.path.isfile(new_filename):
-        # NO_VERIFY_SSL is set to true in gh action for testing purposes (problem with self-signed certificate)
-        response = requests.get(base_url, verify=not os.getenv("NO_VERIFY_SSL", False))
+    # NO_VERIFY_SSL is set to true in gh action for testing purposes (problem with self-signed certificate)
+    response = requests.get(base_url, verify=not os.getenv("NO_VERIFY_SSL", False))
 
-        if not response.ok:
-            raise ValueError(f"Error downloading PDB {pdb_code}")
-
-        if out == "bytes":
-            if base_url.endswith(".gz"):
-                return gzip.decompress(response.content)
-            return response.content
-
-        if out == "str":
-            if base_url.endswith(".gz"):
-                return gzip.decompress(response.content).decode()
-            return response.content.decode()
-
-        elif out == "path":
-            with open(new_filename, "wb") as f:
-                if base_url.endswith(".gz"):
-                    # Save the downloaded data to a temporary .gz file
-                    f.write(gzip.decompress(response.content))
-                else:
-                    f.write(response.content)
-            return new_filename
-        else:
-            raise ValueError(f"Invalid output option: {out}. Choose from 'bytes', 'str' or 'path'")
+    if not response.ok:
+        raise ValueError(f"Error downloading PDB {pdb_code}")
+    if base_url.endswith(".gz"):
+        return gzip.decompress(response.content)
+    return response.content
 
 
 class PDBSegmentSelector(PDB.Select):

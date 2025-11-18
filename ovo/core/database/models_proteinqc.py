@@ -65,17 +65,17 @@ PROTEINQC_TOOLS_BY_KEY = {tool.tool_key: tool for tool in PROTEINQC_TOOLS}
 class ProteinQCWorkflow(DescriptorWorkflow):
     tools: List[str] = None
 
-    def submit(self, scheduler: Scheduler, pipeline_name: str = None) -> str:
+    def get_pipeline_name(self) -> str:
+        return "ovo.proteinqc"
+
+    def prepare_params(self, workdir: str) -> dict:
         # TODO: Submit only if there is not existing running job
         # TODO: Submit only if descriptors are missing
-        from ovo import db
-        from ovo.core.logic.descriptor_logic import submit_proteinqc
+        from ovo.core.logic.descriptor_logic import prepare_proteinqc_params
 
-        return submit_proteinqc(
-            tools=self.tools,
-            scheduler=scheduler,
-            designs=db.select(Design, id__in=self.design_ids),
-            chains=list(self.chains),
+        return prepare_proteinqc_params(
+            workflow=self,
+            workdir=workdir,
         )
 
     def process_results(self, job: DescriptorJob, callback: Callable = None):
