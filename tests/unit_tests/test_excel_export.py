@@ -3,7 +3,7 @@ from openpyxl import load_workbook
 
 from ovo import db, Design, Project, Pool, Round, DescriptorValue, DesignSpec, DesignChain
 from ovo.core.database.descriptors_proteinqc import PROTEINQC_MAIN_DESCRIPTORS
-from ovo.core.logic.descriptor_logic import export_design_descriptors_excel
+from ovo.core.logic.descriptor_logic import export_proteinqc_excel
 
 
 def create_test_data():
@@ -40,9 +40,7 @@ def test_export_proteinqc_excel():
     Exports the proteinqc excel, reads it back and checks the descriptor value of the design.
     """
     design = create_test_data()
-    excel_data = export_design_descriptors_excel(
-        [design.id], descriptor_keys=[d.key for d in PROTEINQC_MAIN_DESCRIPTORS]
-    )
+    excel_data = export_proteinqc_excel([design.id])
     wb = load_workbook(excel_data)
     ws = wb.active
     headers = [cell.value for cell in ws[2]]

@@ -5,7 +5,6 @@ import pandas as pd
 
 from ovo import config
 from ovo.core.database import Descriptor, NumericDescriptor
-from ovo.core.database.descriptors import ALL_DESCRIPTORS_BY_KEY
 from ovo.core.database.models_proteinqc import ProteinQCTool
 from ovo.core.scheduler.base_scheduler import Scheduler
 

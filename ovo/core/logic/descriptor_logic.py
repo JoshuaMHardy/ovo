@@ -9,6 +9,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from ovo import db, storage, get_scheduler
 from ovo.core.auth import get_username
+from ovo.core.database.descriptors_proteinqc import PROTEINQC_MAIN_DESCRIPTORS
 from ovo.core.database.models_proteinqc import ProteinQCWorkflow
 from ovo.core.database.models_refolding import RefoldingWorkflow, RefoldingSupportedDesignWorkflow
 from ovo.core.database.descriptors import ALL_DESCRIPTORS_BY_KEY, ALL_DESCRIPTOR_KEYS_SET
@@ -24,7 +25,6 @@ from ovo.core.database.models import (
 )
 from ovo.core.logic.job_logic import update_job_status
 from ovo.core.logic.proteinqc_logic import get_descriptor_cmap, get_descriptor_comment
-from ovo.core.scheduler.base_scheduler import Scheduler
 from ovo.core.utils.export import write_sheet
 
 
@@ -417,6 +417,17 @@ def update_and_process_descriptors(descriptor_jobs: List[DescriptorJob], error_c
                     f"Unexpected error processing result of {workflow_name} (job {descriptor_job.job_id}): {e}"
                 )
                 traceback.print_exc()
+
+
+def export_proteinqc_excel(design_ids: list[str], output_path: str = None):
+    df = get_wide_descriptor_table(
+        design_ids=design_ids,
+        descriptor_keys=[d.key for d in PROTEINQC_MAIN_DESCRIPTORS],
+        nested=False,
+        human_readable=False,
+    )
+    # TODO add numbers of yellow and orange flags
+    return export_design_descriptors_excel(df, output_path=output_path)
 
 
 def export_design_descriptors_excel(df: pd.DataFrame, output_path=None) -> BytesIO | None:

@@ -17,7 +17,7 @@ from ovo.core.database.models_proteinqc import ProteinQCWorkflow, PROTEINQC_TOOL
 from ovo.core.logic.descriptor_logic import (
     submit_descriptor_workflow,
     get_wide_descriptor_table,
-    export_design_descriptors_excel,
+    export_proteinqc_excel,
 )
 from ovo.core.logic.proteinqc_logic import get_available_schedulers
 
@@ -73,13 +73,7 @@ def proteinqc_fragment(pool_ids: list[str], design_ids: list[str] | None = None)
 
     if st.button("Download ProteinQC table", key="prepare_proteinqc"):
         with st.spinner("Preparing descriptor table..."):
-            # Get raw dataframe with single header, columns named with descriptor keys ("pipeline|tool_key|descriptor")
-            df = get_wide_descriptor_table(
-                design_ids=design_ids, descriptor_keys=[d.key for d in descriptors], nested=False, human_readable=False
-            )
-            # TODO add numbers of yellow and orange flags
-            # df = get_proteinqc_flags_df(df).join(df)
-            excel_bytes = export_design_descriptors_excel(df)
+            excel_bytes = export_proteinqc_excel(design_ids)
         confirm_download_button(
             data=excel_bytes.getvalue(),
             file_name=f"ProteinQC_{'_'.join(pool_ids)}_{len(design_ids)}_designs.xlsx",
