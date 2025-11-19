@@ -24,7 +24,10 @@ def test_export_import_cycle(example_pdb_path):
 
     # Create a test project with some data
     test_project = Project(
-        id="test_export_import_project", name="Test Export Import Project", author="test_user", public=False,
+        id="test_export_import_project",
+        name="Test Export Import Project",
+        author="test_user",
+        public=False,
     )
     db.save(test_project)
 

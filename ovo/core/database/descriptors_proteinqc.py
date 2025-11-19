@@ -454,7 +454,7 @@ MOLECULEAR_WEIGHT = NumericGlobalDescriptor(
 
 ENTROPY = NumericGlobalDescriptor(
     name="Sequence entropy",
-    description="Diversity/orderedness of amino acids in a protein sequence; high values = more variety, low values = more repetitionn. For each overlapping 21-residue window (if sequence is longer than 21), the binary Shannon entropy of the amino acid composition is calculated and averaged to produce a single metric for the sequence. A sequence of identical amino acids has entropy 0, while a sequence with a uniform distribution of all 20 amino acids in each segment reaches log2(20) ~ 4.32.",
+    description="Diversity/orderedness of amino acids in a protein sequence; high values = more variety, low values = more repetition. For each overlapping 21-residue window (if sequence is longer than 21), the binary Shannon entropy of the amino acid composition is calculated and averaged to produce a single metric for the sequence. A sequence of identical amino acids has entropy 0, while a sequence with a uniform distribution of all 20 amino acids in each segment reaches log2(20) ~ 4.32.",
     tool="Sequence composition",
     key="proteinqc|seq_composition|avg_entropy",
     comparison="higher_is_better",
@@ -661,11 +661,13 @@ NONE_PERCENTAGE = NumericGlobalDescriptor(
 
 ASPHERICITY = NumericGlobalDescriptor(
     name="Asphericity",
-    description="Asphericity of the protein structure, value of 0 corresponds to a perfect sphere.",
+    description="Asphericity of the protein structure, value of 0 corresponds to a perfect sphere, values closer to 1 correspond to elongated proteins.",
     tool="MDAnalysis",
     key="proteinqc|dssp|asphericity",
-    comparison="does_not_apply",
+    comparison="lower_is_better",
     min_value=0,
+    warning_value=0.4,
+    error_value=0.9,
     max_value=1,
 )
 
@@ -744,8 +746,8 @@ HYDROPHOBIC_TOTAL_AREA_NORM = NumericGlobalDescriptor(
     comparison="lower_is_better",
     min_value=0,
     max_value=1,
-    warning_value=0.7,
-    error_value=0.9,
+    warning_value=0.25,
+    error_value=0.45,
 )
 
 HYDROPHOBIC_TOP_PATCH_AREA = NumericGlobalDescriptor(
@@ -1008,13 +1010,12 @@ PROTEINQC_SEQUENCE_DESCRIPTORS = [
     CHARGE_7_4,
 ]
 PROTEINQC_STRUCTURE_DESCRIPTORS = [
-    HELIX_PERCENTAGE,
-    SHEET_PERCENTAGE,
-    TURN_PERCENTAGE,
     ESMIF,
     HYDROPHOBIC_TOTAL_AREA_NORM,
     ASPHERICITY,
-    RADIUS_OF_GYRATION_NORM,
+    HELIX_PERCENTAGE,
+    SHEET_PERCENTAGE,
+    TURN_PERCENTAGE,
 ]
 
 # All

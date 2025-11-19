@@ -100,7 +100,7 @@ def get_precomputed_histogram_alt(
         .encode(
             x=alt.X("bin_center:Q", title=None),
             y=alt.Y(
-                "normalized_height:Q", axis=alt.Axis(title=None, labels=False, ticks=False, domain=False)
+                "normalized_height:Q", axis=alt.Axis(title="Reference", labels=False, ticks=False, domain=False)
             ),  # Hide y axis label and ticks
             color=color,
             tooltip=["bin_center"],
@@ -135,15 +135,16 @@ def update_bins(values: List[float], source_bins: List[float]) -> List[float]:
     max_bin = source_bins[-1]
 
     # If the second distribution has a wider range, extend the bins
-    if min_value := np.min(values) < min_bin:
+    if (min_value := np.min(values)) < min_bin:
         # Create extra bins on the left
         extra_left = np.arange(min_value, min_bin, bin_width)
         bins = np.concatenate([extra_left, bins])
 
-    if max_value := np.max(values) > max_bin:
+    if (max_value := np.max(values)) > max_bin:
         # Create extra bins on the right
         extra_right = np.arange(max_bin + bin_width, max_value + bin_width, bin_width)
         bins = np.concatenate([bins, extra_right])
+
     return bins
 
 
@@ -180,7 +181,7 @@ def get_histogram_alt(
         .encode(
             x=alt.X("bin_center:Q", title=None),
             y=alt.Y(
-                "height:Q", axis=alt.Axis(title=None, labels=False, ticks=False, domain=False)
+                "height:Q", axis=alt.Axis(title="Designs", labels=False, ticks=False, domain=False)
             ),  # Hide y axis label and ticks
             tooltip=["bin_center"],
             color=alt.value(color),

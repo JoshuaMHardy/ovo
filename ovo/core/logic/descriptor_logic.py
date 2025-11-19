@@ -419,24 +419,16 @@ def update_and_process_descriptors(descriptor_jobs: List[DescriptorJob], error_c
                 traceback.print_exc()
 
 
-def export_design_descriptors_excel(
-    design_ids: Collection[str], output_path=None, descriptor_keys: list[str] = None
-) -> BytesIO | None:
+def export_design_descriptors_excel(df: pd.DataFrame, output_path=None) -> BytesIO | None:
     """Export Excel file with design descriptors for the given design ids.
 
-    :param design_ids: List of design ids to include in the export
+    :param df: Dataframe with any values, descriptor columns should be descriptor keys
     :param output_path: If given, write the Excel file to this path. If None, return the bytes of the Excel file.
-    :param descriptor_keys: If given, only include these descriptor keys. If None, include all available descriptors.
     """
-
-    # Get raw dataframe with single header, columns named with descriptor keys ("pipeline|tool_key|descriptor")
-    df = get_wide_descriptor_table(
-        design_ids=design_ids, descriptor_keys=descriptor_keys, nested=False, human_readable=False
-    )
-
-    # Set index to include sequence columns
-    sequence_cols = [col for col in df.columns if col.startswith("sequence") and "|" not in col]
-    df = df.reset_index().set_index([df.index.name] + sequence_cols)
+    assert df.columns.nlevels == 1, "Expected nested=False dataframe with single-level columns"
+    # Set index to include non-descriptor columns
+    meta_cols = [col for col in df.columns if col not in ALL_DESCRIPTORS_BY_KEY]
+    df = df.reset_index().set_index([df.index.name] + meta_cols)
     descriptors = [ALL_DESCRIPTORS_BY_KEY[c] for c in df.columns]
 
     # Rename columns to human-readable names
@@ -462,7 +454,7 @@ def export_design_descriptors_excel(
     sheet.freeze_panes(row_offset, column_offset)
 
     # Set column width
-    index_width = 18
+    index_width = 20
     sheet.set_column(0, 0, index_width)
     width = 10
     sheet.set_column(1, n_cols - 1, width)

@@ -113,3 +113,11 @@ def sorted_alphanumeric(values: Collection[str]) -> list[str]:
     :return: The sorted list of strings.
     """
     return sorted(values, key=get_alphanumeric_sort_key)
+
+
+def truncated_list(items: Collection[Any], max_items: int, sep: str = ", ") -> str:
+    """Join a list truncated to a maximum number of items, adding ellipsis if necessary."""
+    if len(items) <= max_items:
+        return sep.join(str(item) for item in items)
+    else:
+        return sep.join(str(item) for item in list(items)[:max_items]) + sep + "..."

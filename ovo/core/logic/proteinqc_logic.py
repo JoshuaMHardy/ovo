@@ -1,10 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 
 import matplotlib.colors as mcolors
 import pandas as pd
 
 from ovo import config
 from ovo.core.database import Descriptor, NumericDescriptor
+from ovo.core.database.descriptors import ALL_DESCRIPTORS_BY_KEY
 from ovo.core.database.models_proteinqc import ProteinQCTool
 from ovo.core.scheduler.base_scheduler import Scheduler
 
@@ -230,6 +231,35 @@ def get_descriptor_cmap(descriptor: Descriptor, min_val: float, max_val: float):
         cmap = get_neutral_colormap(min_val, max_val)
 
     return cmap
+
+
+def get_flag_color(value: float, descriptor: Descriptor) -> Literal["green", "yellow", "orange", "missing", None]:
+    if not isinstance(descriptor, NumericDescriptor):
+        return None
+    if not descriptor.warning_value or not descriptor.error_value:
+        return None
+    if pd.isna(value):
+        return "missing"
+    try:
+        value = float(value)
+    except ValueError:
+        return None
+    if descriptor.comparison == "higher_is_better":
+        if value > descriptor.warning_value:
+            return "green"
+        elif value > descriptor.error_value:
+            return "yellow"
+        else:
+            return "orange"
+    elif descriptor.comparison == "lower_is_better":
+        if value < descriptor.warning_value:
+            return "green"
+        elif value < descriptor.error_value:
+            return "yellow"
+        else:
+            return "orange"
+    else:
+        return None
 
 
 def get_descriptor_comment(descriptor: Descriptor) -> str:

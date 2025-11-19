@@ -2,7 +2,7 @@
 
 # OVO, an open-source ecosystem for *de novo* protein design
 
-OVO consolidates models, workflows, data management, and interactive visualization into a scalable, 
+OVO (pronounced "oh-voh") consolidates models, workflows, data management, and interactive visualization into a scalable, 
 high-performance, infrastructure-agnostic platform for *de novo* protein design. 
 OVO features Nextflow-based workflow orchestration, a storage layer, and both command-line and web interfaces 
 that democratize scaffold design, binder design and diversification, and validation workflows.

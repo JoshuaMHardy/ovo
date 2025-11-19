@@ -1,20 +1,24 @@
 import streamlit as st
 
 from ovo import db
+from ovo.app.components.custom_elements import confirm_download_button
 from ovo.app.components.descriptor_explorer import descriptor_explorer
 from ovo.app.components.descriptor_job_components import refresh_descriptors
 from ovo.app.components.descriptor_table import descriptor_table
 from ovo.app.components.descriptor_tiles import descriptor_overview_tiles
-from ovo.app.components.download_component import download_descriptor_table
 from ovo.app.utils.cached_db import (
     get_cached_pools,
     get_cached_design_ids,
     get_cached_available_descriptors,
 )
 from ovo.core.database import Pool, Design, NumericGlobalDescriptor
-from ovo.core.database.models_proteinqc import ProteinQCWorkflow, PROTEINQC_TOOLS
 from ovo.core.database.descriptors_proteinqc import PROTEINQC_MAIN_DESCRIPTORS
-from ovo.core.logic.descriptor_logic import submit_descriptor_workflow, get_wide_descriptor_table
+from ovo.core.database.models_proteinqc import ProteinQCWorkflow, PROTEINQC_TOOLS
+from ovo.core.logic.descriptor_logic import (
+    submit_descriptor_workflow,
+    get_wide_descriptor_table,
+    export_design_descriptors_excel,
+)
 from ovo.core.logic.proteinqc_logic import get_available_schedulers
 
 
@@ -67,11 +71,21 @@ def proteinqc_fragment(pool_ids: list[str], design_ids: list[str] | None = None)
 
     descriptor_table(design_ids, descriptors_df, descriptors)
 
-    download_descriptor_table(
-        f"ProteinQC_{'_'.join(pool_ids)}_{len(design_ids)}_designs",
-        design_ids,
-        descriptor_keys=[d.key for d in descriptors],
-    )
+    if st.button("Download ProteinQC table", key="prepare_proteinqc"):
+        with st.spinner("Preparing descriptor table..."):
+            # Get raw dataframe with single header, columns named with descriptor keys ("pipeline|tool_key|descriptor")
+            df = get_wide_descriptor_table(
+                design_ids=design_ids, descriptor_keys=[d.key for d in descriptors], nested=False, human_readable=False
+            )
+            # TODO add numbers of yellow and orange flags
+            # df = get_proteinqc_flags_df(df).join(df)
+            excel_bytes = export_design_descriptors_excel(df)
+        confirm_download_button(
+            data=excel_bytes.getvalue(),
+            file_name=f"ProteinQC_{'_'.join(pool_ids)}_{len(design_ids)}_designs.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=f"download_proteinqc",
+        )
 
     descriptor_overview_tiles(descriptors_df, descriptors_by_key)
 

@@ -1,12 +1,22 @@
-import streamlit as st
+from collections import Counter
+from typing import List, Dict
+
 import numpy as np
 import pandas as pd
-from typing import List, Dict
-from collections import Counter
+import streamlit as st
 
-
+from ovo import storage, CategoricalResidueDescriptor, ResidueNumberDescriptor, NumericGlobalDescriptor
 from ovo.app.components import molstar_custom_component, StructureVisualization
 from ovo.app.components.custom_elements import wrapped_columns
+from ovo.app.components.download_component import download_job_designs_component
+from ovo.app.components.workflow_visualization_components import visualize_design_sequence
+from ovo.app.utils.cached_db import get_cached_design, get_cached_pool
+from ovo.app.utils.protein_qc_plots import (
+    load_histograms,
+    format_threshold_value,
+    descriptor_histograms,
+    get_histogram_alt,
+)
 from ovo.core.database import descriptors_rfdiffusion
 from ovo.core.database.descriptors_proteinqc import (
     PROTEINQC_SEQUENCE_DESCRIPTORS,
@@ -16,18 +26,16 @@ from ovo.core.database.descriptors_proteinqc import (
     AF2_PRIMARY_DESCRIPTORS,
 )
 from ovo.core.database.models import Descriptor
-from ovo.core.logic.proteinqc_logic import get_descriptor_plot_setting
-from ovo import storage, CategoricalResidueDescriptor, ResidueNumberDescriptor, NumericGlobalDescriptor
-from ovo.app.utils.protein_qc_plots import (
-    load_histograms,
-    format_threshold_value,
-    descriptor_histograms,
-    get_histogram_alt,
-)
-from ovo.app.utils.cached_db import get_cached_design
-from ovo.app.components.workflow_visualization_components import visualize_design_sequence
+from ovo.core.logic.proteinqc_logic import get_descriptor_plot_setting, get_descriptor_cmap, get_flag_color
+from ovo.core.utils.formatting import truncated_list
 
 HISTOGRAMS = load_histograms()
+FLAG_ICONS = {
+    "missing": ":material/question_mark:",
+    "green": ":material/check_circle:",
+    "yellow": ":material/warning:",
+    "orange": ":material/error:",
+}
 
 
 @st.fragment()
@@ -167,6 +175,7 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
 
     table_data = pd.DataFrame({"value": descriptor_values})
     table_data.index.name = "Design ID"
+    styler = None
 
     col1, col2 = st.columns([2, 3.5])
 
@@ -190,7 +199,6 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
         format_func = lambda design_id: f"{design_id} | {descriptor.name} = {table_data.value.loc[design_id]}"
     elif isinstance(descriptor, NumericGlobalDescriptor):
         caption = f"Designs sorted by **{descriptor.name}**"
-        table_data = table_data.sort_values(by="value", ascending=True)
         min_val = descriptor.min_value if descriptor.min_value is not None else float(table_data["value"].min())
         max_val = descriptor.max_value if descriptor.max_value is not None else float(table_data["value"].max())
 
@@ -199,11 +207,29 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
             epsilon = 1e-6
             min_val -= epsilon
             max_val += epsilon
+
+        table_data = table_data.sort_values(by="value", ascending=True)
+        flags = table_data["value"].apply(get_flag_color, descriptor=descriptor)
+        if not flags.isna().all():
+            table_data["flag"] = flags
+            # style flag column
+            colors = {
+                "missing": "#eeeeee",  # light grey
+                "green": "#edf9ee",  # light green
+                "yellow": "#ffffec",  # light yellow
+                "orange": "#fff6eb",  # orange
+            }
+            styler = table_data.style.map(
+                lambda value: f"background-color: {colors[value]}",
+                subset=["flag"],
+            )
+
         column_config = {
             "design_id": st.column_config.Column("Design ID"),
             "value": st.column_config.ProgressColumn(
-                descriptor.name, format="%.2f", min_value=min_val, max_value=max_val
+                descriptor.name, format="%.2f", min_value=min_val, max_value=max_val, color="#111111"
             ),
+            "flag": st.column_config.Column("Flag", width="small"),
         }
         format_func = lambda design_id: f"{design_id} | {descriptor.name} = {table_data.value.loc[design_id]:.2f}"
     elif isinstance(descriptor, ResidueNumberDescriptor):
@@ -218,7 +244,7 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
     with col1:
         st.caption(caption)
         st.dataframe(
-            table_data,
+            styler if styler is not None else table_data,
             column_config=column_config,
             width="stretch",
         )
@@ -230,6 +256,17 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
             key="design_id_select",
             format_func=format_func,
         )
+
+        value = descriptor_values.loc[design_id]
+        flag = get_flag_color(value, descriptor)
+        if flag:
+            icon = FLAG_ICONS.get(flag, "")
+            if flag == "missing":
+                st.markdown(f":grey-background[{icon} Value missing]")
+            else:
+                # TODO explain thresholds
+                #  and maybe compare to percentile in PDB ({descriptor.name} = 123, higher than 95% of PDB)
+                st.markdown(f":{flag}-background[{icon} {flag.title()} flag]")
 
         visualize_design_sequence(design_id)
 
@@ -256,7 +293,7 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
                 "Representation",
                 options=list(colors_and_types.keys()),
                 format_func=lambda x: colors_and_types[x][0],
-                key="colors_and_types_input",
+                key=f"colors_and_types_input_{descriptor.key}",
                 label_visibility="collapsed",
                 index=rep_type_index,
             )
@@ -264,67 +301,60 @@ def detail_descriptor_dialog(descriptor, descriptor_values: pd.Series):
         with right:
             st.write(colors_and_types[(color, representation_type)][1])
 
-        molstar_custom_component(
-            structures=[
-                StructureVisualization(
-                    pdb=storage.read_file_str(design.structure_path),
-                    color=color,
-                    representation_type=representation_type,
-                )
-            ],
-            key="dialog_structure",
-            height="300px",
-        )
+        left, right = st.columns([1.5, 1])
+        with left:
+            molstar_custom_component(
+                structures=[
+                    StructureVisualization(
+                        pdb=storage.read_file_str(design.structure_path),
+                        color=color,
+                        representation_type=representation_type,
+                    )
+                ],
+                key="dialog_structure",
+                height="300px",
+            )
+        with right:
+            pool = get_cached_pool(design.pool_id)
+            st.caption(f"Download {design.id}")
+            download_job_designs_component(design_ids=[design_id], pools=[pool], key="single", single_line=False)
 
 
 def detail_button(descriptor, descriptor_values: pd.Series):
-    if st.button("Detail", key=f"{descriptor.name}_btn"):
+    if st.button("Show more", key=f"{descriptor.name}_btn"):
         st.query_params["dialog"] = descriptor.key
     if st.query_params.get("dialog") == descriptor.key:
         detail_descriptor_dialog(descriptor, descriptor_values)
 
 
-def write_tile_title(descriptor: Descriptor, descriptor_values: pd.Series):
-    # Indicate pass/warning/error with color highlight and symbol by comparing avg value to warning/error thresholds
-    if (
-        (isinstance(descriptor, NumericGlobalDescriptor))
-        and (descriptor.comparison != "does_not_apply")
-        and (descriptor.warning_value and descriptor.error_value)
-    ):
-        avg_value = np.mean(descriptor_values)
-
-        if descriptor.comparison == "higher_is_better":
-            if avg_value > descriptor.warning_value:
-                color = "green"
-                symbol = ":material/check_circle:"
-            elif avg_value > descriptor.error_value:
-                color = "orange"
-                symbol = ":material/warning:"
-            else:
-                color = "red"
-                symbol = ":material/error:"
+def show_flag_counts(descriptor: NumericGlobalDescriptor, values: pd.Series):
+    """Show a list of design counts by group (missing, green, yellow, orange)."""
+    warning_ids = {"missing": [], "green": [], "yellow": [], "orange": []}
+    for design_id, val in values.items():
+        flag = get_flag_color(val, descriptor)
+        if not flag:
+            continue
+        warning_ids[flag].append(design_id)
+    for flag, ids in warning_ids.items():
+        if not ids:
+            continue
+        if flag == "missing":
+            label = "missing value" if len(ids) == 1 else "missing values"
+            color = "grey"
         else:
-            if avg_value < descriptor.warning_value:
-                color = "green"
-                symbol = ":material/check_circle:"
-            elif avg_value < descriptor.error_value:
-                color = "orange"
-                symbol = ":material/warning:"
-            else:
-                color = "red"
-                symbol = ":material/error:"
-        st.markdown(f"#### :{color}-background[{symbol} {descriptor.name}]", help=descriptor.description)
-    else:
-        st.markdown(f"#### {descriptor.name}", help=descriptor.description)
+            label = f"{flag} flag" if len(ids) == 1 else f"{flag} flags"
+            color = flag
+        icon = FLAG_ICONS.get(flag, "")
+        st.markdown(f":{color}-background[{icon} **{len(ids):,}** {label}]", help=truncated_list(ids, 10))
 
 
 def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]):
     columns = wrapped_columns(len(descriptors), wrap=3, gap="medium")
     for col, descriptor in zip(columns, descriptors):
         with col:
-            with st.container(border=True, height="stretch"):
+            with st.container(border=True):
+                st.markdown(f"#### {descriptor.name}", help=descriptor.description)
                 if (descriptor.tool, descriptor.name) not in descriptors_df.columns:
-                    st.markdown(f"#### {descriptor.name}", help=descriptor.description)
                     st.warning("Not available")
                     continue
                 descriptor_values = descriptors_df[(descriptor.tool, descriptor.name)]
@@ -332,8 +362,6 @@ def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]
                     descriptor_values = pd.to_numeric(descriptor_values, errors="coerce")
 
                 nonnull_descriptor_values = descriptor_values.dropna().tolist()
-
-                write_tile_title(descriptor, nonnull_descriptor_values)
 
                 if not nonnull_descriptor_values:
                     st.warning("Not available")
@@ -366,6 +394,9 @@ def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]
                         width="stretch",
                         height=200,
                     )
+                    with st.container(horizontal=True, horizontal_alignment="right"):
+                        detail_button(descriptor, descriptor_values)
+
                 elif isinstance(descriptor, NumericGlobalDescriptor):
                     avg_value = np.mean(nonnull_descriptor_values)
                     st.metric(f"Average {descriptor.name}", format_threshold_value(descriptor.name, avg_value))
@@ -392,6 +423,12 @@ def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]
 
                     st.altair_chart(fig, use_container_width=True)
 
+                    with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
+                        with st.container():
+                            st.empty()
+                            show_flag_counts(descriptor, descriptor_values)
+                        detail_button(descriptor, descriptor_values)
+
                 # Support for ResidueNumberDescriptor
                 elif isinstance(descriptor, ResidueNumberDescriptor):
                     residue_df = get_residue_presence_df(descriptor, nonnull_descriptor_values, descriptors_df.shape[0])
@@ -414,6 +451,9 @@ def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]
                             width="stretch",
                             height=200,
                         )
+                    with st.container(horizontal=True, horizontal_alignment="right"):
+                        detail_button(descriptor, descriptor_values)
                 else:
                     st.info("Visualization for this type of descriptor coming soon")
-                detail_button(descriptor, descriptor_values)
+                    with st.container(horizontal=True, horizontal_alignment="right"):
+                        detail_button(descriptor, descriptor_values)

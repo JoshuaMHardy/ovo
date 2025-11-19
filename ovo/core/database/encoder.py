@@ -10,14 +10,14 @@ class DataclassEncoder(json.JSONEncoder):
     """Simple JSON encoder that encodes dataclasses and enums."""
 
     def default(self, o):
+        if hasattr(o, "__do_not_serialize__") and o.__do_not_serialize__:
+            raise ValueError(f"Objects of type {type(o).__name__} cannot be updated in the database.")
         if is_dataclass(o):
             return asdict(o)
         if isinstance(o, enum.Enum):
             return o.value
         if isinstance(o, Path):
             return str(o.resolve())
-        if hasattr(o, "__do_not_serialize__") and o.__do_not_serialize__:
-            raise ValueError(f"Attempting to serialize read-only object of type {type(o)}")
         return super().default(o)
 
 
