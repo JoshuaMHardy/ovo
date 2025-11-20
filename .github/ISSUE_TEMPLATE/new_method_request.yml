@@ -1,0 +1,20 @@
+name: 🧩 New Method Request
+description: Request integrating an existing method directly into OVO or as a separate plugin.
+labels: [new method]
+body:
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Description
+      description: What method would you like to use and why? Where can we learn more?
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Willingness to Contribute
+      description: Are you willing to contribute code for this method?
+      options:
+        - No, I am only requesting this method.
+        - I can contribute but I would need help getting started.
+        - Yes, I can lead the development.
+    validations:
+      required: true

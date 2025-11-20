@@ -1,0 +1,33 @@
+name: Run tests
+on:
+    push:
+      
+jobs:
+    run-tests:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.11'
+
+            - name: Install dependencies
+              run: | 
+                pip install uv rust-just && \
+                uv sync
+
+            - name: Ruff format check
+              run: | 
+                just format-check
+
+            - name: Ruff lint check
+              run: | 
+                just lint-check || true # TODO enforce linting
+
+            - name: Unit tests
+              run: | 
+                just test
+
