@@ -454,7 +454,7 @@ MOLECULEAR_WEIGHT = NumericGlobalDescriptor(
 
 ENTROPY = NumericGlobalDescriptor(
     name="Sequence entropy",
-    description="Diversity/orderedness of amino acids in a protein sequence; high values = more variety, low values = more repetition. For each overlapping 21-residue window (if sequence is longer than 21), the binary Shannon entropy of the amino acid composition is calculated and averaged to produce a single metric for the sequence. A sequence of identical amino acids has entropy 0, while a sequence with a uniform distribution of all 20 amino acids in each segment reaches log2(20) ~ 4.32.",
+    description="Diversity/orderedness of amino acids in a protein sequence; high values = more variety, low values = more compositional bias. For each overlapping 21-residue window (if sequence is longer than 21), the binary Shannon entropy of the amino acid composition is calculated and averaged to produce a single metric for the sequence. A sequence of identical amino acids has entropy 0, while a sequence with a uniform distribution of all 20 amino acids in each segment reaches log2(20) ~ 4.32.",
     tool="Sequence composition",
     key="proteinqc|seq_composition|avg_entropy",
     comparison="higher_is_better",

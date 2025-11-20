@@ -273,12 +273,14 @@ def load_config(home_dir: str) -> OVOConfig:
     if not os.path.exists(home_dir) or not os.path.exists(config_path):
         # Config dir does not exist yet, print error and exit
         if home_dir != DEFAULT_OVO_HOME:
+            # Custom OVO_HOME set but invalid
             if not os.path.exists(home_dir):
-                raise OVOCliError(f"OVO_HOME directory does not exist: {home_dir}")
+                raise OVONotInitializedError(f"OVO_HOME directory set but is not accessible: {home_dir}")
             else:
-                raise OVOCliError(f"OVO config file not found in OVO_HOME: {home_dir}")
+                raise OVONotInitializedError(f"OVO config file not found in OVO_HOME: {home_dir}")
         else:
-            raise OVONotInitializedError()
+            # Default OVO_HOME, raise not initialized error
+            raise OVONotInitializedError("OVO not initialized")
 
     console.print(f"[bold]OVO home[/bold] [green]{home_dir}[/green]")
 

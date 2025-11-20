@@ -120,7 +120,8 @@ This directory will contain all OVO files:
 All paths can be customized later in the [bold]config.yml[/bold] file.
 """)
         home_dir = yes or Prompt.ask(
-            prompt="Enter path, or press [bold]Enter[/bold] to select the default", default=DEFAULT_OVO_HOME
+            prompt="Enter path, or press [bold]Enter[/bold] to select the default",
+            default=os.getenv("OVO_HOME", DEFAULT_OVO_HOME), # Use OVO_HOME env var if set already
         )
 
     home_dir = os.path.abspath(os.path.expanduser(home_dir))

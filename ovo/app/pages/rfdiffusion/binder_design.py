@@ -100,7 +100,7 @@ analyzed in the {designs_page.title} page. For example, you can run ProteinQC to
 - Percentage of individual amino acids
 - Charge at pH 7.4 and 5.5, isoelectric point
 - Aromaticity
-- Sequence entropy, highlighting repetitive sequences
+- Sequence entropy, highlighting sequences with compositionally biased regions
 - And more; computed using BioPython ProteinAnalysis<sup>[4]</sup>
 
 #### Rosetta descriptors<sup>[2]</sup>

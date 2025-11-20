@@ -86,7 +86,7 @@ analyzed in the {designs_page.title} page.
 
 - Percentage of individual amino acids
 - Charge at pH 7.4 and 5.5, isoelectric point
-- Sequence entropy, highlighting repetitive sequences
+- Sequence entropy, highlighting sequences with compositionally biased regions
 - Aromaticity
 - And more; computed using BioPython ProteinAnalysis<sup>[6]</sup>
 

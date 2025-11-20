@@ -81,24 +81,24 @@ try:
     # Additional imports at the bottom to avoid circular dependencies
     from ovo.core.logic import design_logic, descriptor_logic, job_logic, project_logic, import_export_logic
 
-except OVONotInitializedError:
+except OVONotInitializedError as e:
     if ("init" in sys.argv and "home" in sys.argv) or "-h" in sys.argv or "--help" in sys.argv:
         # Ignore initialization error if we are initializing the home dir
         pass
     else:
-        message = "\n[green]OVO_HOME[/green] env variable not set.\n"
-
-        if shell_config_path := get_shell_config_path():
-            with open(shell_config_path, "r") as f:
-                contents = f.read()
-            if "OVO_HOME" in contents:
-                message += (
-                    f"\nLooks like you have already initialized OVO and added [green]OVO_HOME[/green] "
-                    f"to your {os.path.basename(shell_config_path)}, please run:\n" + get_source_command()
-                )
-            else:
-                message += (
-                    "\nPlease initialize OVO using [bold]ovo init home[/bold] or set [green]OVO_HOME[/green] env var."
-                )
+        if os.getenv("OVO_HOME"):
+            message = str(e)
+        else:
+            message = (
+                "\nPlease initialize OVO using [bold]ovo init home[/bold] or set [green]OVO_HOME[/green] env var."
+            )
+            if shell_config_path := get_shell_config_path():
+                with open(shell_config_path, "r") as f:
+                    contents = f.read()
+                if "OVO_HOME" in contents:
+                    message = (
+                        f"\n[green]OVO_HOME[/green] env variable not set.\nLooks like you have already initialized OVO and added [green]OVO_HOME[/green] "
+                        f"to your {os.path.basename(shell_config_path)}, please run:\n" + get_source_command()
+                    )
         console.print(Panel.fit(message, title="⚠️  OVO not initialized", border_style="red"))
         sys.exit(2)
