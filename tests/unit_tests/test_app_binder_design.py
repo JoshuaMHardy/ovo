@@ -119,7 +119,7 @@ class TestBinderDesign:
 
         # Input tab
         logger.info("Testing input tab...")
-        at.text_input("input_pdb_code").set_value("7k7h").run()
+        at.text_input("input_pdb_code").set_value("7k7h").run(timeout=TIMEOUT)
         workflow = at.session_state.workflows[page_key]
         asserts.assert_true(
             workflow.rfdiffusion_params.input_pdb,
