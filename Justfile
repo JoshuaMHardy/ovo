@@ -78,3 +78,6 @@ format:
 # Check if code is formatted correctly with ruff
 format-check:
     {{RUN}} ruff format --check .
+
+docs:
+    cd docs; {{RUN}} make html

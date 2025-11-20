@@ -45,12 +45,19 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    # testing
     "pytest",
     "pytest-mock",
-    "rsconnect",
+    # utilities
     "ruff",
     "python-dotenv",
+    # live reloading for streamlit
     "watchdog",
+    # building docs
+    "sphinx",
+    "myst-parser",
+    "furo",
+    "sphinx-autodoc2"
 ]
 
 [project.scripts]
