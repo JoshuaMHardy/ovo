@@ -7,7 +7,7 @@ import pandas as pd
 
 from sqlalchemy.orm.attributes import flag_modified
 
-from ovo import db, storage, get_scheduler
+from ovo import db, storage, get_scheduler, config
 from ovo.core.auth import get_username
 from ovo.core.database.descriptors_proteinqc import PROTEINQC_MAIN_DESCRIPTORS
 from ovo.core.database.models_proteinqc import ProteinQCWorkflow
@@ -105,6 +105,9 @@ def get_wide_descriptor_table(
 
 
 def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str, round_id: str):
+    if config.props.read_only:
+        raise RuntimeError("Cannot submit design workflow: OVO server is in read-only mode")
+
     workflow.validate()
 
     username = get_username()

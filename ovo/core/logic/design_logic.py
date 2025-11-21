@@ -1,16 +1,15 @@
-import io
 import sys
 import traceback
 
 from copy import deepcopy
 from datetime import datetime
-from typing import Callable, Collection
+from typing import Callable
 
 import pandas as pd
 from humanize import naturaltime
 from sqlalchemy.orm.attributes import flag_modified
 
-from ovo import db
+from ovo import db, config
 from ovo import get_scheduler
 from ovo.core.auth import get_username
 from ovo.core.database.models import Design, Threshold, DescriptorValue, Round, DesignJob, Base, DesignWorkflow
@@ -187,6 +186,9 @@ def submit_design_workflow(
             )
         print("Pool with same name and params already exists in this round, returning existing pool")
         return design_job, pool
+
+    if config.props.read_only:
+        raise RuntimeError("Cannot submit design workflow: OVO server is in read-only mode")
 
     # Create a deep copy of the workflow object to avoid errors
     # when users modify workflow params in place and resubmit
