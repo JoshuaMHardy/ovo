@@ -159,7 +159,7 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
 
     config_props = ConfigProps()
     config_props.pyrosetta_license = yes or Confirm.ask(
-        "Enable fastrelax? In case of commercial use, this requires a PyRosetta license"
+        "\nEnable fastrelax? In case of commercial use, this requires a PyRosetta license"
     )
 
     admin_users = []
@@ -179,40 +179,19 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
     console.print(f"\n[green]✔[/green] Initialized OVO config: [bold]{config_path}[/bold]")
 
     if home_dir != DEFAULT_OVO_HOME and not no_env:
+        console.print("\nYou will need to set the OVO_HOME environment variable to use this home directory.")
         export_command = f'export OVO_HOME="{home_dir}"'
-        # Detect shell and determine config file
-        shell_config_path = get_shell_config_path()
-        console.print("\nWould you like to remember the ovo home dir?")
-        console.print("- none: Do not remember, will manage OVO_HOME env var myself")
-        console.print(f"- global: Use this home dir for this installation of OVO (creates {global_config_flag})")
-        console.print(
-            f"- local: Use this home dir for myself (append the env var to my shell config at {shell_config_path})"
-        )
 
-        choice = Prompt.ask(
-            "\nSelect an option or press [bold]Enter[/bold] to select the default",
-            choices=["none", "global", "local"],
-            default="local",
-        )
-
-        if choice == "none":
+        if (shell_config_path := get_shell_config_path()) and Confirm.ask(
+            f"\nAdd the OVO_HOME dir to {shell_config_path}?"
+        ):
+            with open(shell_config_path, "a") as f:
+                f.write(f"\n{export_command}")
+            console.print(f"\n✔ Added to {shell_config_path}. Restart your terminal or run:")
+            console.print(get_source_command())
+        else:
             console.print("\nPlease set this environment variable manually:")
             console.print(f"[bold green]{export_command}[/bold green]")
-        elif choice == "global":
-            save_global_home_dir(home_dir)
-            console.print("[bold]Saved global home directory for this installation of OVO[/bold]")
-        elif choice == "local":
-            if not shell_config_path:
-                console.print(
-                    "\n[red]Could not detect your shell config file (e.g. .bashrc or .zshrc). "
-                    "You will need to set the OVO_HOME environment variable manually:[/red]"
-                )
-                console.print(f"[bold green]{export_command}[/bold green]")
-            else:
-                with open(shell_config_path, "a") as f:
-                    f.write(f"\n{export_command}")
-                console.print(f"\n✔ Added to {shell_config_path}. Restart your terminal or run:")
-                console.print(get_source_command())
 
     console.print("\nNext step: Initialize the preview workflow using [bold]ovo init preview[/bold]")
 
