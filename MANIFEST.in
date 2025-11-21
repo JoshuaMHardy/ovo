@@ -5,6 +5,8 @@ prune **/test-results
 
 prune **/node_modules
 
+prune ovo/pipelines/*/local
+
 prune ovo/app/components/*/test_files
 
 # Patterns to exclude from any directory
