@@ -177,14 +177,6 @@ schedulers:
       max_memory: 8GB
       config: ./nextflow_local.config
     workdir: ./workdir
-#  Example of a scheduler using AWS HealthOmics:
-#  healthomics:
-#    name: HealthOmics
-#    type: HealthOmicsScheduler
-#    submission_args:
-#      workflow_name_prefix: dev_
-#      role_arn: arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR-EXECUTION-ROLE
-#    workdir: s3://workdir-bucket-name/
 # Uncomment to customize web page content
 # templates:
 #     welcome: templates/welcome.md

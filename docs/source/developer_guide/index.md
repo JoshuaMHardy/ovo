@@ -7,4 +7,5 @@ run the Streamlit app with live reload, execute tests and ruff formatting, and c
 :maxdepth: 1
 
 quickstart
+plugin_development
 ```

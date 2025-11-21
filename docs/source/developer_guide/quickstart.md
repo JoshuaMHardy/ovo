@@ -69,3 +69,4 @@ just format
 Before you start working on a feature or bug fix, please [create an issue](https://github.com/MSDLLCpapers/ovo/issues)
 describing your proposed changes. This helps us track work and coordinate contributions.
 
+To contribute a separate plugin, please refer to the [plugin development guide](plugin_development.md).
