@@ -11,9 +11,9 @@ TODO link to pre-print.
 
 ## 🐣 Getting started
 
-To get started with OVO, please refer to the **TODO User Guide**.
+To get started with OVO, please refer to the **[User Guide](https://ovo.dichlab.org/docs/user_guide/installation.html)**.
 
-To preview the OVO web app (without the ability to submit jobs), see the **TODO OVO Demo Server**.
+To preview the OVO web app (without the ability to submit jobs), see the [OVO Demo Server](https://ovo.dichlab.org/demo).
 
 ## 🧬 Methods & Acknowledgments
 
@@ -38,4 +38,4 @@ We gratefully acknowledge the authors and developers of the following methods an
 
 OVO is an open-source project and we welcome contributions from the community.
 
-Please refer to the Developer Guide **TODO link** for information on how to contribute to OVO.
+Please refer to the [Developer Guide](https://ovo.dichlab.org/docs/developer_guide/) for information on how to contribute to OVO.

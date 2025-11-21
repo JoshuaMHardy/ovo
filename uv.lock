@@ -1851,7 +1851,7 @@ wheels = [
 
 [[package]]
 name = "ovo"
-version = "0.0.1"
+version = "1.0.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },

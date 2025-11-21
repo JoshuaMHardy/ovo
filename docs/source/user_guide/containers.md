@@ -11,16 +11,20 @@ to run using Singularity, Apptainer, Docker, or other container platform by modi
 typically located at `~/ovo/config.yml`:
 
 ```yaml
-TODO describe how to set the scheduler profile
+schedulers:
+  local:
+    name: Local with Conda   # <-- Choose a descriptive name
+    type: NextflowScheduler
+    submission_args:
+      profile: conda,cpu_env # <--- Change 'conda' to 'singularity', 'apptainer', or 'docker' as needed
 ```
 
 ## Container types
 
-OVO containers are defined in the *ovo-containers GitHub repository* **TODO link**
+OVO containers are defined in the [ovo-containers GitHub repository](https://github.com/MSDLLCpapers/ovo-containers).
 
-**TODO links** Conda environments are defined directly in the 
-envs directory of the OVO repository 
-or plugin repositories like OVO promb and are automatically created by Nextflow during workflow execution.
+Conda environments are defined directly in the [envs](https://github.com/MSDLLCpapers/ovo/tree/develop/ovo/envs) directory of the OVO repository 
+or plugin repositories like [OVO promb](https://github.com/MSDLLCpapers/ovo-promb/tree/main/ovo_promb/envs) and are automatically created by Nextflow during workflow execution.
 
 For Singularity and Apptainer, OVO will automatically download the required containers 
 during workflow execution from [http://ovo.dichlab.org/public/singularity](http://ovo.dichlab.org/public/singularity).

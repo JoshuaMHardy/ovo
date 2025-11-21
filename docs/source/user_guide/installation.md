@@ -90,7 +90,11 @@ If the variable is not set, it defaults to `~/ovo`.
 
 The ovo home directory contains the following important files and folders:
 
-- TODO describe files in home directory
+- *`config.yml`* OVO configuration file
+- *`ovo.db`* SQLite database (stored as a single file)
+- *`workdir`* Working directory for Nextflow workflows
+- *`storage`* PDB design files and other permanent results
+- *`reference_files`* Downloaded model weights and other reference files
 
 ### 4. Initialize containers (optional)
 

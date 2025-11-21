@@ -54,7 +54,7 @@ Run unit tests:
 just test
 ```
 
-Run Ruff linter:
+Run Ruff linter (optional):
 ```
 just lint
 ```
@@ -64,6 +64,8 @@ Run Ruff formatter:
 just format
 ```
 
-## 4. Contribute your first PR
+## 4. Contribute your first issue and pull request
 
-TODO create issue, PR - more instructions in issue template and PR template
+Before you start working on a feature or bug fix, please [create an issue](https://github.com/MSDLLCpapers/ovo/issues)
+describing your proposed changes. This helps us track work and coordinate contributions.
+
