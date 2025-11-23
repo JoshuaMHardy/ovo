@@ -16,7 +16,7 @@ schedulers:
     name: Local with Conda   # <-- Choose a descriptive name
     type: NextflowScheduler
     submission_args:
-      profile: conda,cpu_env # <--- Change 'conda' to 'singularity', 'apptainer', or 'docker' as needed
+      profile: conda,cpu_env # <--- Change 'conda' to 'singularity', 'apptainer', 'docker', ...
       config: ./nextflow_local.config # <--- Customize advanced Nextflow config if needed
 ```
 
@@ -31,7 +31,7 @@ For **Singularity** and **Apptainer**, OVO will automatically download the requi
 during workflow execution from [http://ovo.dichlab.org/public/singularity](http://ovo.dichlab.org/public/singularity).
 The downloaded containers will be stored in `$OVO_HOME/workdir/work/singularity/`. If you wish to build the containers yourself, you will need to first build the Docker images using instructions below.
 save them into a Docker archive (`docker save -o image.tar image`),
-and then convert them to Singularity/Apptainer format (`singularity build image.sif docker-archive://image.tar`).
+and then convert them to Singularity/Apptainer format (`singularity build image-name docker-archive://image.tar`).
 
 For **Docker**, please build all required images using the provided docker-compose file in the ovo-containers repository:
 

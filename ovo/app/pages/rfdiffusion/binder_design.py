@@ -128,12 +128,12 @@ AF2&nbsp;Binder&nbsp;RMSD which includes the pose RMSD in the complex).
 - ⚠️ **Only one target chain is supported.** You may circumvent this by merging multiple chains into a single chain in your 
     input PDB file, adding residue index jumps (gap of at least 50 residues between the original chains), this influences both RFdiffusion 
     and AlphaFold2. <!--clipped to -32, 32 in alphafold2, colabdesign adds 50 between binder and target --->
-- ⚠️ **High AF2 Binder RMSD for good designs in symmetric targets.** In case the binding site occurs multiple times in the 
+- ⚠️ **High AF2 Target-aligned Binder RMSD for good designs in symmetric targets.** In case the binding site occurs multiple times in the 
     target by symmetry (e.g. a homo-n-mer)
     AF2 may predict the binder to the other occurrence of the binding site. This will cause the RMSD to be high, even
     though the design can indeed bind the correct epitope. The designs' RMSD can adopt a multimodal distribution as a
     result, where the peaks correspond to the binding site-to-binding site distances. Currently, we do not correct for
-    this symmetry and when filtering designs based on AF2 Binder RMSD in such cases, some good designs may be discarded.
+    this symmetry and when filtering designs based on AF2 Target-aligned Binder RMSD in such cases, some good designs may be discarded.
 - ⚠️ **This page enables running the end-to-end workflow**. Individual steps like ProteinMPNN redesign or AlphaFold2 scoring 
     alone cannot currently be executed through the user interface.
 
@@ -291,7 +291,8 @@ def preview_step():
         """)
 
     if st.button(":material/wand_stars: Generate preview"):
-        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, timesteps=num_timesteps)
+        with st.spinner("Submitting RFdiffusion job..."):
+            workflow.preview_job_id = submit_rfdiffusion_preview(workflow, timesteps=num_timesteps)
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:

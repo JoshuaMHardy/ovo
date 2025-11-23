@@ -2,10 +2,7 @@ nextflow.enable.dsl = 2
 
 process BindCraft {
     def containerName = "bindcraft"
-    if (workflow.containerEngine == null) {
-      throw new RuntimeException("Conda environment not supported for BindCraft. Please use a container profile like docker or singularity.")
-    }
-    container "${ (workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container)
+    container "${ workflow.containerEngine in ['singularity', 'apptainer']
         ? params.ovo_container_dir + '/ovo-' + containerName
         : params.docker_repository + 'ovo-' + containerName }"
 
@@ -23,6 +20,9 @@ process BindCraft {
     output:
         path "${batch_name}/bindcraft/"
     script:
+    if (workflow.containerEngine == null) {
+      throw new RuntimeException("Conda environment not supported for BindCraft. Please use a container profile like docker or singularity.")
+    }
     """
     set -euxo pipefail
 

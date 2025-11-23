@@ -1,11 +1,8 @@
 nextflow.enable.dsl = 2
 
 process proteinQCPepPatch {
-  if (workflow.containerEngine == null) {
-    throw new RuntimeException("Conda environment not supported for Pep-Patch. Please use a container profile like docker or singularity.")
-  }
   def containerName = "pep-patch"
-  container "${ (workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container)
+  container "${ workflow.containerEngine in ['singularity', 'apptainer']
     ? params.ovo_container_dir + '/ovo-' + containerName
     : params.docker_repository + 'ovo-' + containerName }"
   label "peppatch"
@@ -23,6 +20,9 @@ process proteinQCPepPatch {
   output:
     path "${batch_dir}/*", emit: output_csv
   script:
+  if (workflow.containerEngine == null) {
+    throw new RuntimeException("Conda environment not supported for Pep-Patch. Please use a container profile like docker or singularity.")
+  }
   """
   set -euxo pipefail
 

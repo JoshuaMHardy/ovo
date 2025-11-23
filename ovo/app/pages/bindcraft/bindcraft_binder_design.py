@@ -80,7 +80,7 @@ RMSD) is sufficiently low. The default filters also filter out unstructured bind
 a number of interface residue contacts, etc. The designs that pass BindCraft filters are automatically marked as accepted.
 
 BindCraft refolding metrics are similar to those in the RFdiffusion workflow, with the addition of binder metrics
-computed using AF2 prediction of the binder alone — e.g. AF2 Binder pLDDT, or AF2 Binder RMSD. Here the binder-only
+computed using AF2 prediction of the binder alone — e.g. AF2 Binder pLDDT, or AF2 Binder-aligned Binder RMSD. Here the binder-only
 structural model is compared to the binder in the design trajectory, the complex. (Note that this definition is different to
 the metric with the same name in RFdiffusion workflow.) 
         

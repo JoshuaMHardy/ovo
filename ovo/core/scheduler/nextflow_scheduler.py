@@ -57,7 +57,7 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
 
         if self.has_queue():
             # Submit the command to the queue. Worker will run queue_run_task() in the worker loop.
-            self.queue_put((command, job_id))
+            self.queue_put(job_id, command)
             return job_id
         else:
             # Run the command directly in a subprocess
@@ -89,13 +89,11 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
 
         return job_id
 
-    def queue_run_task(self, task: Any):
+    def queue_run_task(self, job_id: str, task: Any):
         """Execute a single task from the queue synchronously - executed in the worker loop"""
-        if not isinstance(task, tuple) or len(task) != 2:
-            raise ValueError(f"Task must be a tuple of two arguments, got: {task}")
-        command, job_id = task
         # Run synchronously, print to stdout and stderr, ignore exit codes
-        return self._run_subprocess(command, job_id, sync=True)
+        assert isinstance(task, list), f"Expected task to be a list of command arguments, got: {task} ({type(task).__name__})"
+        return self._run_subprocess(task, job_id, sync=True)
 
     def run(
         self,
@@ -312,10 +310,8 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
                 lines = f.readlines()
                 if not lines:
                     return None
-                if len(lines) > 1:
-                    print(f"Found {len(lines)} retries for job {job_id} in: {history_file}")
-                    print("Using last history entry.")
                 if lines:
+                    # Use last history entry in case of multiple retries
                     fields = lines[-1].strip().split("\t")
                     status = fields[3]
                     assert status in ["-", "OK", "ERR"], f"Unexpected job status '{status}' in: {history_file}"

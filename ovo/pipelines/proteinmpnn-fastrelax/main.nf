@@ -4,7 +4,7 @@ nextflow.enable.dsl = 2
 process ProteinMPNN_Fast_Relax {
     def containerName = "proteinmpnn-fastrelax"
     conda { params.getSharedEnv("ovo.${containerName}", workflow.profile) }
-    container "${ (workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container)
+    container "${ workflow.containerEngine in ['singularity', 'apptainer']
         ? params.ovo_container_dir + '/ovo-' + containerName
         : params.docker_repository + 'ovo-' + containerName }"
     label "fastrelax"

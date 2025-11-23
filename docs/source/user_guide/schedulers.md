@@ -38,15 +38,22 @@ assigning unique `Design` IDs and creating Design and `DescriptorValue` entries 
 To use SLURM executor, modify the OVO configuration file, typically located at `~/ovo/config.yml`:
 
 ```yaml
+default_scheduler: slurm
+local_scheduler: local # <-- used for preview jobs, should run locally if possible
 schedulers:
-  slurm_singularity:
-    name: SLURM Singularity GPU
+  slurm: # <- your new scheduler key, can be any name you choose, set as default_scheduler above
+    name: SLURM Singularity GPU # <-- user-friendly name
     type: NextflowScheduler
     submission_args:
-      profile: singularity
+      profile: singularity # <-- or apptainer, docker, conda, etc.
       config: ./nextflow_slurm_singularity.config
-    workdir: /scratch/ovo/workdir
-
+    workdir: /scratch/ovo/workdir # <-- where to store temporary files (workflow task results and logs)
+  local: # <--- default local scheduler, adjust based on your settings
+    name: Local with Conda
+    type: NextflowScheduler
+    submission_args:
+      profile: conda,cpu_env
+      config: ./nextflow_local.config
 ```
 
 And create the referenced `nextflow_slurm_singularity.config` nextflow config file:
@@ -89,6 +96,12 @@ process {
 }
 ```
 
+Test that your scheduler configuration is working by submitting a test job:
+
+```bash
+ovo init rfdiffusion --scheduler slurm
+```
+
 Please refer to the [Nextflow documentation](https://nextflow.io/docs/latest/executor.html#slurm) for more details on SLURM configuration options.
 
 ## Configuring OVO for PBS Pro scheduler
@@ -96,15 +109,22 @@ Please refer to the [Nextflow documentation](https://nextflow.io/docs/latest/exe
 To use PBS executor, modify the OVO configuration file, typically located at `~/ovo/config.yml`:
 
 ```yaml
+default_scheduler: pbs
+local_scheduler: local # <-- used for preview jobs, should run locally if possible
 schedulers:
-  pbs_singularity:
-    name: PBS Singularity GPU
+  pbs: # <- your new scheduler key, can be any name you choose, set as default_scheduler above
+    name: PBS Singularity GPU # <-- user-friendly name
     type: NextflowScheduler
     submission_args:
-      profile: singularity
+      profile: singularity # <-- or apptainer, docker, conda, etc.
       config: ./nextflow_pbs_singularity.config
-    workdir: /scratch/ovo/workdir
-
+    workdir: /scratch/ovo/workdir # <-- where to store temporary files (workflow task results and logs)
+  local: # <--- default local scheduler, adjust based on your settings
+    name: Local with Conda
+    type: NextflowScheduler
+    submission_args:
+      profile: conda,cpu_env
+      config: ./nextflow_local.config
 ```
 
 And create the referenced `nextflow_pbs_singularity.config` nextflow config file:
@@ -150,6 +170,12 @@ process {
 }
 ```
 
+Test that your scheduler configuration is working by submitting a test job:
+
+```bash
+ovo init rfdiffusion --scheduler pbs
+```
+
 An example PBS Pro configuration directory can be found in the example repository: [hpc_pbs_config_example](https://github.com/MSDLLCpapers/ovo-examples/tree/main/hpc_pbs_config_example).
 
 Please refer to the [Nextflow documentation](https://nextflow.io/docs/latest/executor.html#pbs-pro) for more details on PBS Pro configuration options.
@@ -159,14 +185,22 @@ Please refer to the [Nextflow documentation](https://nextflow.io/docs/latest/exe
 To use [AWS HealthOmics](https://docs.aws.amazon.com/omics/), modify the OVO configuration file, typically located at `~/ovo/config.yml`:
 
 ```yaml
+default_scheduler: healthomics
+local_scheduler: local # <-- used for preview jobs, should run locally if possible
 schedulers:
-  healthomics:
-    name: HealthOmics # <-- Choose a descriptive name
+  healthomics: # <- your new scheduler key, can be any name you choose, set as default_scheduler above
+    name: HealthOmics # <-- user-friendly name
     type: HealthOmicsScheduler
     submission_args:
       workflow_name_prefix: dev_ # <-- Prefix as configured during deployment
       role_arn: arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR-EXECUTION-ROLE
     workdir: s3://workdir-bucket-name/prefix # <-- S3 location for HealthOmics job output
+  local: # <--- default local scheduler, adjust as needed
+    name: Local with Conda
+    type: NextflowScheduler
+    submission_args:
+      profile: conda,cpu_env
+      config: ./nextflow_local.config
 ```
 
 Pipelines will need to be deployed to AWS HealthOmics.

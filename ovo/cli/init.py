@@ -30,9 +30,19 @@ RFDIFFUSION_MODEL_FILES = [
         "76e4e260aefee3b582bd76b77ab95d2592e64f00c51bf344968ab9239f3250bc",
     ),
     (
+        "https://files.ipd.uw.edu/pub/RFdiffusion/f572d396fae9206628714fb2ce00f72e/Complex_beta_ckpt.pt",
+        "rfdiffusion_models/Complex_beta_ckpt.pt",
+        "5a0b1cafc23c60b1aabcec1e49391986ac4fd02cc1b6b4cc41714ca9fe882e9e",
+    ),
+    (
         "https://files.ipd.uw.edu/pub/RFdiffusion/5532d2e1f3a4738decd58b19d633b3c3/ActiveSite_ckpt.pt",
         "rfdiffusion_models/ActiveSite_ckpt.pt",
         "beca1f672049161df0bc6a2d2523828f19fd9c8a2b449988e246dde42e7ea986",
+    ),
+    (
+        "https://files.ipd.uw.edu/pub/RFdiffusion/74f51cfb8b440f50d70878e05361d8f0/InpaintSeq_ckpt.pt",
+        "rfdiffusion_models/InpaintSeq_ckpt.pt",
+        "3b71b2b954e87d46b75a88ba64e0420fbf27f592604b10b6c3561b8c8ab70ab6",
     ),
 ]
 

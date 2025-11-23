@@ -14,9 +14,9 @@ class HealthOmicsScheduler(Scheduler):
         name: str,
         workdir: str,
         reference_files_dir: str,
-        submission_args: dict,
-        allow_submit: bool,
         aws: AWSSessionManager,
+        allow_submit: bool = True,
+        submission_args: dict = None,
     ):
         """
         Args:

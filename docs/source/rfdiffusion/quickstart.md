@@ -5,13 +5,13 @@
 Before you proceed, make sure to install OVO and set up the OVO home directory
 by following [OVO Installation](../user_guide/installation.md).
 
-You will need approximately ???? GB of free disk space:
+You will need at least 15-30 GB of free disk space:
 
-- RFdiffusion model weights: ??? GB
-- AlphaFold2 model weights: ??? GB (can be reduced by keeping only model 1 weights)
+- RFdiffusion model weights: 2 GB
+- AlphaFold2 model weights: 5 GB (can be reduced by keeping only model 1 weights)
 - Execution environments 
-  - Conda environments: ??? GB
-  - or containers when using Singularity/Apptainer/Docker: ??? GB
+  - Conda environments: ~8 GB
+  - or containers when using Singularity/Apptainer/Docker: ~21 GB
 
 ## 2. Set up RFdiffusion
 

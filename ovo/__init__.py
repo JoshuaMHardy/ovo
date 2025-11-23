@@ -51,7 +51,7 @@ try:
             name=scheduler_config.name,
             workdir=scheduler_config.workdir,
             reference_files_dir=config.reference_files_dir,
-            allow_submit=not config.props.read_only,
+            allow_submit=True,
             submission_args=scheduler_config.submission_args,
             **init_args,
         )

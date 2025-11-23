@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 process JupyterLab {
     conda { params.env ? params.getSharedEnv("ovo.${params.env}", workflow.profile) : null }
-    container (params.env ? "${ (workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container)
+    container (params.env ? "${ workflow.containerEngine in ['singularity', 'apptainer']
         ? params.ovo_container_dir + '/ovo-' + params.env
         : params.docker_repository + 'ovo-' + params.env }" : null)
 

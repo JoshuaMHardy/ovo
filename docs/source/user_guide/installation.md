@@ -1,7 +1,8 @@
 # OVO Installation
 
-
 ### 1. Prerequisites
+
+Make sure you have the following software installed:
 
 - **Python** (Python 3.13 recommended, at least 3.9)
 - **Java** (OpenJDK 21-24 recommended, at least 17)
@@ -54,25 +55,27 @@ Verify: `java -version`
 
 ### 2. Installation
 
-Install OVO from PyPI:
+First, install OVO using:
+
 ```sh
-pip install ovo-app
+# TEMPORARY: install from .tar.gz file until OVO is published on PyPI
+pip install https://ovo.dichlab.org/public/ovo-1.0.0a1.tar.gz
 ```
 
 <details>
-    <summary>Conda and other install options</summary>
-    
-#### Install with conda
+    <summary>Install with Conda</summary>
 
 ```sh
 # Create a new conda environment
 conda create -n ovo python=3.13
 conda activate ovo
 # Install OVO with pip
-pip install ovo-app
+# TEMPORARY: install from .tar.gz file until OVO is published on PyPI
+pip install https://ovo.dichlab.org/public/ovo-1.0.0a1.tar.gz
 ```
-
 </details>
+
+When OVO is successfully installed, please proceed with configuration steps below.
 
 ### 3. Initialize "OVO home" directory
 

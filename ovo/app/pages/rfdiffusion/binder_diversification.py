@@ -371,7 +371,8 @@ def preview_step():
         """)
 
     if st.button(":material/wand_stars: Generate preview"):
-        workflow.preview_job_id = submit_rfdiffusion_preview(workflow, partial_diffusion=True, timesteps=num_timesteps)
+        with st.spinner("Submitting RFdiffusion job..."):
+            workflow.preview_job_id = submit_rfdiffusion_preview(workflow, partial_diffusion=True, timesteps=num_timesteps)
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:

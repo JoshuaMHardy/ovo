@@ -3,7 +3,7 @@ nextflow.enable.dsl = 2
 process AlphaFoldInitialGuess {
   def containerName = "colabdesign"
   conda { params.getSharedEnv("ovo.${containerName}", workflow.profile) }
-  container "${ (workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container)
+  container "${ workflow.containerEngine in ['singularity', 'apptainer']
     ? params.ovo_container_dir + '/ovo-' + containerName + (workflow.profile.tokenize(",").contains("cpu_env") ? "-cpu" : "")
     : params.docker_repository + 'ovo-' + containerName + (workflow.profile.tokenize(",").contains("cpu_env") ? "-cpu" : "") }"
 

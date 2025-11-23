@@ -38,6 +38,8 @@ def main(
     streamlit_script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "run_app.py")
     sys.argv = ["streamlit", "run", streamlit_script_path]
     sys.argv.extend(["--browser.gatherUsageStats", "0"])  # disable streamlit usage stats
+    sys.argv.extend(["--server.showEmailPrompt", "0"]) # disable streamlit email prompt (first run)
+    sys.argv.extend(["--logger.enableRich", "0"]) # disable rich logging to avoid weird tracebacks
     sys.argv.extend(streamlit_run_args.args)
 
     if token or os.environ.get("OVO_LOGIN_TOKEN") or config.auth.always_require_token:
