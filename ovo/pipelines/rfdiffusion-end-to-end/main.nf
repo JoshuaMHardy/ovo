@@ -78,7 +78,6 @@ workflow {
         ProteinMPNN_Fast_Relax(
             BackboneMetrics.out.filtered_pdb_dir,
             params.mpnn_fastrelax_cycles,
-            false,
             params.mpnn_run_parameters
         )
         mpnn_out = ProteinMPNN_Fast_Relax.out.pdb_dir

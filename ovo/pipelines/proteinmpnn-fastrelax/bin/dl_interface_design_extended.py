@@ -147,8 +147,6 @@ parser.add_argument(
 )
 parser.add_argument("-seed", type=int, default=None, help="Random seed - DANGER - will produce same output each time")
 
-parser.add_argument("-cyclic", action="store_true", help="Cyclic peptide design mode")
-
 args = parser.parse_args(sys.argv[1:])
 
 init_args = "-beta_nov16 -in:file:silent_struct_type binary -mute basic.io.database core.scoring"
@@ -156,11 +154,8 @@ init_args = "-beta_nov16 -in:file:silent_struct_type binary -mute basic.io.datab
 if not args.debug:
     init_args += " -mute all"
 
-if args.cyclic:
-    xml_path = os.path.join(script_dir, "RosettaFastRelaxCyclicRFpeptide.xml")
-else:
-    xml_path = os.path.join(script_dir, "RosettaFastRelaxUtil.xml")
-    init_args += " -use_terminal_residues true"
+xml_path = os.path.join(script_dir, "RosettaFastRelaxUtil.xml")
+init_args += " -use_terminal_residues true"
 
 if args.seed:
     # Deterministic mode using a fixed random seed

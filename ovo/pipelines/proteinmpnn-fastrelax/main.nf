@@ -14,7 +14,6 @@ process ProteinMPNN_Fast_Relax {
     input:
         tuple val (batch_name), path (pdb_dir)
         val relax_cycles
-        val cyclic
         val run_parameters
     output:
         tuple val(batch_name), path ("${batch_name}/proteinmpnn_fastrelax"), emit: pdb_dir
@@ -47,7 +46,6 @@ process ProteinMPNN_Fast_Relax {
         -checkpoint_path lib/ProteinMPNN/vanilla_model_weights/v_48_020.pt \
         -relax_cycles ${relax_cycles} \
         -output_intermediates \
-        ${cyclic ? "-cyclic" : ""} \
         ${run_parameters}
 
     # remove lib link to avoid nextflow access issues when scanning output directory
@@ -60,7 +58,6 @@ workflow {
     ProteinMPNN_Fast_Relax(
         ['batch1', params.pdb_dir],
         params.relax_cycles,
-        params.cyclic,
         params.run_parameters
     )
 
