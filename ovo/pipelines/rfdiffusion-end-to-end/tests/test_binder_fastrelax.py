@@ -22,7 +22,6 @@ def test_5eli_binder_fastrelax():
             rfdiffusion_contig="A74-97/0 20",
             rfdiffusion_run_parameters="diffuser.T=15 inference.deterministic=True",
             mpnn_run_parameters="-seed 42",
-            enable_pyrosetta_ddg=True,
             mpnn_fastrelax_cycles=1,
             refolding_tests="af2_model_1_multimer_tt_3rec",
         ),

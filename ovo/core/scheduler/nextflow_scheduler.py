@@ -92,7 +92,9 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
     def queue_run_task(self, job_id: str, task: Any):
         """Execute a single task from the queue synchronously - executed in the worker loop"""
         # Run synchronously, print to stdout and stderr, ignore exit codes
-        assert isinstance(task, list), f"Expected task to be a list of command arguments, got: {task} ({type(task).__name__})"
+        assert isinstance(task, list), (
+            f"Expected task to be a list of command arguments, got: {task} ({type(task).__name__})"
+        )
         return self._run_subprocess(task, job_id, sync=True)
 
     def run(

@@ -131,7 +131,7 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
 """)
         home_dir = yes or Prompt.ask(
             prompt="Enter path, or press [bold]Enter[/bold] to select the default",
-            default=os.getenv("OVO_HOME", DEFAULT_OVO_HOME), # Use OVO_HOME env var if set already
+            default=os.getenv("OVO_HOME", DEFAULT_OVO_HOME),  # Use OVO_HOME env var if set already
         )
 
     home_dir = os.path.abspath(os.path.expanduser(home_dir))
@@ -294,7 +294,7 @@ def rfdiffusion(scheduler: str = None):
             "rfdiffusion_run_parameters": "diffuser.T=15",
             "mpnn_num_sequences": 2,
             "mpnn_fastrelax_cycles": 0,
-            "enable_pyrosetta_ddg": config.props.pyrosetta_license,
+            "disable_pyrosetta_scoring": not config.props.pyrosetta_license,
             "design_type": "binder",
             "refolding_tests": "af2_model_1_multimer_tt_3rec",
         },
@@ -310,7 +310,7 @@ def rfdiffusion(scheduler: str = None):
         exit(process.returncode)
 
     if config.props.pyrosetta_license:
-        # Submit RFdiffusion binder end-to-end workflow with LigandMPNN
+        # Submit RFdiffusion binder end-to-end workflow with FastRelax
         process, job_id = scheduler.submit(
             "rfdiffusion-end-to-end",
             params={
@@ -319,7 +319,6 @@ def rfdiffusion(scheduler: str = None):
                 "rfdiffusion_num_designs": 1,
                 "rfdiffusion_run_parameters": "diffuser.T=15",
                 "mpnn_fastrelax_cycles": 1,
-                "enable_pyrosetta_ddg": True,
                 "design_type": "binder",
                 "refolding_tests": "af2_model_1_multimer_tt_3rec",
             },

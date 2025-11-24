@@ -59,9 +59,9 @@
       "type": "string",
       "description": "Additional CLI arguments for ProteinMPNN or FastRelax"
     },
-    "enable_pyrosetta_ddg": {
+    "disable_pyrosetta_scoring": {
       "type": "boolean",
-      "description": "Enable PyRosetta interface scoring (for binder design)"
+      "description": "Disable PyRosetta interface scoring (for binder design)"
     },
     "refolding_tests": {
       "type": "string",

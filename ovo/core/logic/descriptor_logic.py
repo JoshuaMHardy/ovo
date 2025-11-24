@@ -197,6 +197,17 @@ def prepare_refolding_params(workflow: RefoldingWorkflow, workdir: str) -> dict:
     }
 
 
+def get_log(descriptor_job: DescriptorJob, tail: int = None) -> str:
+    """Get the log of a descriptor job from the scheduler."""
+    assert isinstance(descriptor_job, DescriptorJob), f"Expected DescriptorJob, got {type(descriptor_job).__name__}"
+    scheduler = get_scheduler(descriptor_job.scheduler_key)
+    log = scheduler.get_log(descriptor_job.job_id)
+    if tail is not None:
+        log_lines = log.splitlines()
+        log = "\n".join(log_lines[-tail:])
+    return log
+
+
 def process_results(descriptor_job: DescriptorJob, callback: Callable = None, wait: bool = True):
     """Process results of a successful workflow - save DescriptorValues to database"""
     assert isinstance(descriptor_job, DescriptorJob), f"Expected DescriptorJob, got {type(descriptor_job).__name__}"

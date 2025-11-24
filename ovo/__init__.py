@@ -89,9 +89,7 @@ except OVONotInitializedError as e:
         if os.getenv("OVO_HOME"):
             message = str(e)
         else:
-            message = (
-                "\nPlease initialize OVO using [bold]ovo init home[/bold] or set [green]OVO_HOME[/green] env var."
-            )
+            message = "\nPlease initialize OVO using [bold]ovo init home[/bold] or set [green]OVO_HOME[/green] env var."
             if shell_config_path := get_shell_config_path():
                 with open(shell_config_path, "r") as f:
                     contents = f.read()

@@ -412,7 +412,7 @@ class ProteinMPNN_runner:
         # Now determine which type of run we are doing and execute it
         if args.relax_cycles > 0:
             if args.seqs_per_struct > 1:
-                raise Exception("Cannot use --seqs_per_struct > 1 with --relax_cycles > 0")
+                raise Exception("Cannot use -seqs_per_struct > 1 with -relax_cycles > 0")
 
             self.proteinmpnn_fastrelax(sample_feats)
 

@@ -228,6 +228,17 @@ def submit_design_workflow(
     return design_job, pool
 
 
+def get_log(design_job: DesignJob, tail: int = None) -> str:
+    """Get the log of a design job from the scheduler."""
+    assert isinstance(design_job, DesignJob), f"Expected DesignJob, got {type(design_job).__name__}"
+    scheduler = get_scheduler(design_job.scheduler_key)
+    log = scheduler.get_log(design_job.job_id)
+    if tail is not None:
+        log_lines = log.splitlines()
+        log = "\n".join(log_lines[-tail:])
+    return log
+
+
 def process_results(design_job: DesignJob, callback: Callable = None, wait=True) -> Pool:
     """Process the results of a design job and return the pool object.
 

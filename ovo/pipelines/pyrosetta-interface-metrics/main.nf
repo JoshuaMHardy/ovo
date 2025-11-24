@@ -13,7 +13,7 @@ process PyRosettaInterfaceMetrics {
   publishDir { params.publish_dir }
   input:
     tuple val (batch_name), path (pdb_dir)
-    val cyclic
+    val relax
   output:
     path "${batch_name}/pyrosetta_interface_metrics.jsonl", emit: metrics_csv
   script:
@@ -25,7 +25,7 @@ process PyRosettaInterfaceMetrics {
   python3 ${moduleDir}/bin/pyrosetta_interface_metrics.py \
     ${pdb_dir} \
 	${batch_name}/pyrosetta_interface_metrics.jsonl \
-	${cyclic ? "--cyclic" : ""}
+	${relax ? "--relax" : ""}
   """
 }
 
@@ -33,6 +33,6 @@ process PyRosettaInterfaceMetrics {
 workflow {
   PyRosettaInterfaceMetrics(
     ['batch1', params.pdb_dir],
-    params.cyclic
+    params.relax
   )
 }

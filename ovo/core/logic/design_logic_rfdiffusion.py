@@ -93,18 +93,9 @@ def process_workflow_results(job: DesignJob, callback: Callable = None):
         esmfold_file_suffix = workflow.refolding_params.primary_test
 
     num_contigs = len(workflow.rfdiffusion_params.contigs)
-    num_backbone_designs = int(workflow.rfdiffusion_params.num_designs)
-    num_sequence_designs = int(workflow.protein_mpnn_params.num_sequence_designs)
-
-    if workflow.is_instance(RFdiffusionBinderDesignWorkflow) and config.props.pyrosetta_license:
-        mpnn_pdb_template = "proteinmpnn_fastrelax/{backbone_filename}_standardized_dldesign_0_cycle{idx_sequence}"
-        design_id_suffix = "_cycle"
-        num_sequence_designs += 1
-        sequence_design_descriptor = descriptors_rfdiffusion.FASTRELAX_STRUCTURE_PATH
-    else:
-        mpnn_pdb_template = "ligandmpnn/standardized_pdb/{backbone_filename}_standardized_packed_{num_sequence}_1"
-        design_id_suffix = "_seq"
-        sequence_design_descriptor = descriptors_rfdiffusion.LIGANDMPNN_STRUCTURE_PATH
+    num_backbone_designs = workflow.rfdiffusion_params.num_designs
+    num_sequence_designs = workflow.protein_mpnn_params.num_sequences
+    num_fastrelax_cycles = workflow.protein_mpnn_params.fastrelax_cycles
 
     designs = []
     design_id_mapping = {}
@@ -120,13 +111,11 @@ def process_workflow_results(job: DesignJob, callback: Callable = None):
                 total_idx_backbone=total_idx_backbone,
                 num_backbone_designs=num_backbone_designs,
                 num_sequence_designs=num_sequence_designs,
+                num_fastrelax_cycles=num_fastrelax_cycles,
                 source_output_path=source_output_path,
                 destination_dir=destination_dir,
-                mpnn_pdb_template=mpnn_pdb_template,
-                sequence_design_descriptor=sequence_design_descriptor,
                 alphafold_file_suffix=alphafold_file_suffix,
                 esmfold_file_suffix=esmfold_file_suffix,
-                design_id_suffix=design_id_suffix,
                 cyclic=workflow.rfdiffusion_params.cyclic_offset,
             )
             for contig_idx in range(num_contigs)
@@ -186,13 +175,11 @@ def process_rfdiffusion_design(
     total_idx_backbone: int,
     num_backbone_designs: int,
     num_sequence_designs: int,
+    num_fastrelax_cycles: int,
     source_output_path: str,
     destination_dir: str,
-    mpnn_pdb_template: str,
-    sequence_design_descriptor: StructureFileDescriptor,
     alphafold_file_suffix: str | None,
     esmfold_file_suffix: str | None,
-    design_id_suffix: str,
     cyclic: bool,
 ) -> tuple[list[Design], dict[str, tuple[str, str]]]:
     batch_number = (total_idx_backbone // batch_size) + 1
@@ -224,9 +211,19 @@ def process_rfdiffusion_design(
     designs = []
     design_id_mapping = {}
     descriptor_values = []
-    for idx_sequence in range(num_sequence_designs):
-        # 01, 001 based on total number of sequences
-        sequence_id = str(idx_sequence + 1).zfill(max(len(str(num_sequence_designs)), 2))
+
+    if num_fastrelax_cycles > 0:
+        mpnn_pdb_template = "proteinmpnn_fastrelax/{backbone_filename}_standardized_dldesign_0_cycle{idx_sequence}"
+        seq_id_template = "_cycle{idx_sequence}"
+        sequence_design_descriptor = descriptors_rfdiffusion.FASTRELAX_STRUCTURE_PATH
+        num_seqs_total = num_fastrelax_cycles + 1
+    else:
+        mpnn_pdb_template = "ligandmpnn/standardized_pdb/{backbone_filename}_standardized_packed_{num_sequence}_1"
+        seq_id_template = "_seq{num_sequence}"
+        sequence_design_descriptor = descriptors_rfdiffusion.LIGANDMPNN_STRUCTURE_PATH
+        num_seqs_total = num_sequence_designs
+
+    for idx_sequence in range(num_seqs_total):
         mpnn_source_path = mpnn_pdb_template.format(
             backbone_filename=backbone_filename,
             idx_sequence=idx_sequence,
@@ -235,7 +232,11 @@ def process_rfdiffusion_design(
         filename = os.path.basename(mpnn_source_path)
         # create Design object
         design = deepcopy(backbone_design)
-        design.id = backbone_id + design_id_suffix + sequence_id
+        design.id = backbone_id + seq_id_template.format(
+            idx_sequence=str(idx_sequence).zfill(len(str(num_seqs_total))),
+            # 01, 001 based on total number of sequences
+            num_sequence=str(idx_sequence + 1).zfill(len(str(num_seqs_total))),
+        )
 
         mpnn_full_source_path = os.path.join(source_output_path, batch_name, mpnn_source_path + ".pdb")
         if not storage.file_exists(mpnn_full_source_path):
@@ -321,6 +322,7 @@ def process_rfdiffusion_design(
 def prepare_rfdiffusion_workflow_params(workflow: RFdiffusionWorkflow, workdir: str) -> dict:
     # prepare pdb file or txt file with multiple pdb paths
     workflow_input_path = storage.prepare_workflow_inputs(workflow.rfdiffusion_params.input_pdb_paths, workdir=workdir)
+    design_type = workflow.get_refolding_design_type()
     params = {
         "batch_size": workflow.rfdiffusion_params.batch_size,
         "rfdiffusion_input_pdb": workflow_input_path,
@@ -328,20 +330,22 @@ def prepare_rfdiffusion_workflow_params(workflow: RFdiffusionWorkflow, workdir: 
         "rfdiffusion_contig": ",".join(workflow.rfdiffusion_params.contigs),
         "rfdiffusion_run_parameters": get_rfdiffusion_run_parameters(workflow),
         "refolding_tests": workflow.refolding_params.primary_test,
-        "design_type": workflow.get_refolding_design_type(),
+        "design_type": design_type,
+        "mpnn_num_sequences": workflow.protein_mpnn_params.num_sequences,
     }
 
     if workflow.rfdiffusion_params.backbone_filters:
         params["backbone_filters"] = workflow.rfdiffusion_params.backbone_filters
 
-    # Set FastRelax parameters if pyrosetta license is available and binder design
-    if config.props.pyrosetta_license and workflow.is_instance(RFdiffusionBinderDesignWorkflow):
-        # For FastRelax, default number of sequence is 1
-        # different sequences are generated at each relaxation cycle
-        # num_sequence_designs here is the number of "relaxed" sequences
-        # num_sequence_designs = 1 -> mpnn_fastrelax_cycles = 1 -> N seqs generated = 2
-        params["enable_pyrosetta_ddg"] = True
-        params["mpnn_fastrelax_cycles"] = workflow.protein_mpnn_params.num_sequence_designs
+    # Disable ddG calculations if PyRosetta license is not available
+    if not config.props.pyrosetta_license:
+        params["disable_pyrosetta_scoring"] = True
+
+    if workflow.protein_mpnn_params.fastrelax_cycles:
+        # Use FastRelax
+        if not config.props.pyrosetta_license:
+            raise ValueError("FastRelax requires a PyRosetta license which is disabled in this instance of OVO.")
+        params["mpnn_fastrelax_cycles"] = workflow.protein_mpnn_params.fastrelax_cycles
         params["mpnn_run_parameters"] = (
             f'-omit_AAs "{workflow.protein_mpnn_params.omit_aa}" '
             + f"-temperature {workflow.protein_mpnn_params.sampling_temp} "
@@ -349,8 +353,7 @@ def prepare_rfdiffusion_workflow_params(workflow: RFdiffusionWorkflow, workdir: 
             + f" {workflow.protein_mpnn_params.run_parameters}"
         ).strip()
     else:
-        # Otherwise set LigandMPNN parameters
-        params["mpnn_num_sequences"] = workflow.protein_mpnn_params.num_sequence_designs
+        # Otherwise use LigandMPNN
         params["mpnn_run_parameters"] = (
             f'--omit_AA "{workflow.protein_mpnn_params.omit_aa}" '
             + f"--temperature {workflow.protein_mpnn_params.sampling_temp}"

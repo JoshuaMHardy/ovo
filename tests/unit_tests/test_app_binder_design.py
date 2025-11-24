@@ -3,6 +3,7 @@ import logging
 import pytest
 from pytest_mock import MockerFixture
 
+from ovo.core.database.models_rfdiffusion import ProteinMPNNParams
 from tests.unit_tests.utils import asserts
 from tests.unit_tests.utils.constants import TIMEOUT, BINDER_DESIGN_FILE
 from tests.unit_tests.utils.mocking import mock_molstar
@@ -92,6 +93,21 @@ class TestBinderDesign:
             pool_name,
             contig="A10-100/0 20-40",
             hotspot_residues="A11,A12,A13",
+        )
+
+        seq_method = at.radio("seq_design_method")
+        assert seq_method.value == "ligandmpnn"
+
+        num_sequences = at.number_input("num_sequences")
+        assert num_sequences.value == ProteinMPNNParams().num_sequences  # as per ProteinMPNNParams default
+        assert workflow.protein_mpnn_params.num_sequences == num_sequences.value
+
+        seq_method.set_value("fastrelax").run()
+        num_fastrelax_cycles = at.number_input("fastrelax_cycles")
+        assert num_fastrelax_cycles.value == 3
+        assert workflow.protein_mpnn_params.fastrelax_cycles == num_fastrelax_cycles.value
+        assert workflow.protein_mpnn_params.num_sequences == 1, (
+            "num_sequences should be automatically set to 1 for fastrelax"
         )
 
         # Confirmation tab

@@ -115,8 +115,10 @@ class RFdiffusionParams(WorkflowParams):
 
 @dataclass
 class ProteinMPNNParams(WorkflowParams):
-    # number of sequences to generate
-    num_sequence_designs: int = 5
+    # number of sequences to generate per structure
+    num_sequences: int = 5
+    # number of fastrelax cycles (0 = no fastrelax)
+    fastrelax_cycles: int = 0
     # amino acids to omit, comma-separated
     omit_aa: str = "CX"
     # sampling temperature (0 = greedy, 0.1 = default, higher is more random)
@@ -128,8 +130,22 @@ class ProteinMPNNParams(WorkflowParams):
 
     def validate(self):
         super().validate()
-        if not self.num_sequence_designs:
-            raise ValueError("Please provide a number of sequence designs")
+        if self.fastrelax_cycles:
+            assert self.fastrelax_cycles >= 0, "fastrelax_cycles must be non-negative"
+            if self.num_sequences != 1:
+                # TODO implement support for multiple sequences per cycle with fastrelax
+                raise NotImplementedError(
+                    "Please set num_sequences=1 when using fastrelax_cycles > 0. "
+                    "Generating multiple sequences per cycle with fastrelax is not supported yet."
+                )
+            # help user use proper run params to avoid failing after RFdiffusion stage
+            if "--" in self.run_parameters:
+                raise ValueError("Please use arguments for dl_interface_design_extended.py (single dash)")
+        else:
+            # help user use proper run params to avoid failing after RFdiffusion stage
+            if self.run_parameters and self.run_parameters[0] == "-" and self.run_parameters[1] != "-":
+                raise ValueError("Please use arguments for ligandmpnn (double dash)")
+            assert self.num_sequences >= 1, "num_sequences must be at least 1"
         if not self.sampling_temp:
             raise ValueError("Please provide a sampling temperature")
         if self.bias_aa:

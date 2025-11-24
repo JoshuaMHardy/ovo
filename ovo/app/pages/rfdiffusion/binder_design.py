@@ -11,6 +11,7 @@ from ovo.app.components.submission_components import (
     pool_submission_inputs,
     show_rfdiffusion_advanced_settings,
     review_workflow_submission,
+    show_rfdiffusion_binder_seq_design_inputs,
 )
 from ovo.app.components.trim_components import parameters_trim_structure_component, trimmed_structure_visualizer
 
@@ -34,14 +35,6 @@ import streamlit as st
 def intro_step():
     # Initialize the workflow object in session state
     initialize_workflow(__file__, RFdiffusionBinderDesignWorkflow.name)
-
-    if not config.props.pyrosetta_license:
-        st.warning(
-            "LigandMPNN enabled for sequence generation. "
-            "If you want to use PyRosetta FastRelax for interface side-chains relaxation and "
-            "you have a license (or in case of non-commercial use), "
-            "enable props.pyrosetta_license in your config.yml"
-        )
 
     with st.container(width=850):
         st.markdown(
@@ -383,13 +376,7 @@ def settings_step():
         )
 
     with st.columns([1, 2])[0]:
-        workflow.protein_mpnn_params.num_sequence_designs = st.number_input(
-            "Number of FastRelax iterations (each will produce one additional sequence on top of the initial ProteinMPNN design)",
-            min_value=1,
-            max_value=5,
-            value=workflow.protein_mpnn_params.num_sequence_designs,
-            key="num_sequence_designs",
-        )
+        show_rfdiffusion_binder_seq_design_inputs(workflow)
 
     show_rfdiffusion_advanced_settings(workflow)
 

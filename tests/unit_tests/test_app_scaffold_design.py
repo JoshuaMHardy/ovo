@@ -3,6 +3,7 @@ import logging
 import pytest
 from pytest_mock import MockerFixture
 
+from ovo.core.database.models_rfdiffusion import ProteinMPNNParams
 from tests.unit_tests.utils import asserts
 from tests.unit_tests.utils.constants import TIMEOUT, SCAFFOLD_DESIGN_FILE
 from tests.unit_tests.utils.mocking import mock_molstar
@@ -78,6 +79,9 @@ class TestScaffoldDesign:
         at.button("next_button_top").click().run(timeout=TIMEOUT)
         pool_name = "test scaffold design default values"
         settings_tab(at, page_key, pool_name, contig=contig)
+
+        num_sequences = at.number_input("num_sequences")
+        assert num_sequences.value == ProteinMPNNParams().num_sequences  # as per ProteinMPNNParams default
 
         # Confirmation tab
         at.button("next_button_top").click().run(timeout=TIMEOUT)

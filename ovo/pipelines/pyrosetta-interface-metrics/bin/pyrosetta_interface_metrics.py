@@ -1,4 +1,4 @@
-#!/software/conda/envs/pyrosetta/bin/python3.7
+#!/usr/bin/env python3
 #
 # Calculates contact molecular surface and various other metrics suggested by
 # Brian Coventry. XML is unaltered from Brian.
@@ -33,21 +33,16 @@ p.add_argument(
     default="",
     help="Suffix on outputs to process. e.g. if --suffix=complex, then only processes files named *complex.pdb",
 )
-p.add_argument("--cyclic", action="store_true", default=False, help="Macrocyclic peptide design")
+p.add_argument("--relax", action="store_true", default=False, help="Relax structures before scoring")
 p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
 args = p.parse_args()
 
-if args.cyclic:
-    init("-corrections::beta_nov16 -detect_disulf false")
-    parser = RosettaScriptsParser()
-    protocol_path = script_dir + "/interface_metrics_rfpeptides.xml"
-else:
-    # TODO include "-holes:dalphaball /software/rosetta/DAlphaBall.gcc"
-    # As in https://github.com/RosettaCommons/RFDesign/blob/main/scripts/get_interface_metrics.py
-    # To enable BuriedUnsatHbonds in interface_metrics_rfpeptides.xml
-    init("-corrections::beta_nov16 -detect_disulf false -run:preserve_header true")
-    parser = RosettaScriptsParser()
-    protocol_path = script_dir + "/interface_metrics_rfdesign.xml"
+# TODO include "-holes:dalphaball /software/rosetta/DAlphaBall.gcc"
+# As in https://github.com/RosettaCommons/RFDesign/blob/main/scripts/get_interface_metrics.py
+# To enable BuriedUnsatHbonds in interface_metrics_rfpeptides.xml
+init("-corrections::beta_nov16 -detect_disulf false -run:preserve_header true")
+parser = RosettaScriptsParser()
+protocol_path = script_dir + "/interface_metrics_rfdesign.xml"
 
 ncpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
 print(f"Using {ncpu} cores")
@@ -58,6 +53,12 @@ def calculate(pdb_path):
     row = {"id": basename}
     try:
         pose = pose_from_pdb(pdb_path)
+
+        if args.relax:
+            objs = XmlObjects.create_from_file(protocol_path)
+            relax = objs.get_mover("FastRelax")
+            relax.apply(pose)
+
         # We re-initialize the mover for each PDB to avoid remembering stuff from previous peptides, like peptide length
         protocol = parser.generate_mover(protocol_path)
         # Apply movers

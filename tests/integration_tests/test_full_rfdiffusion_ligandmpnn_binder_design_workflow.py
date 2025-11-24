@@ -24,9 +24,9 @@ def test_binder_default_end_to_end_logic(project_data):
             timesteps=15,  # use 15 diffusion timesteps for faster testing
         ),
         protein_mpnn_params=ProteinMPNNParams(
-            num_sequence_designs=1,
+            num_sequences=2,
             sampling_temp=0.1,
-            run_parameters="-seed 42",
+            run_parameters="--seed 42",
         ),
         refolding_params=RefoldingParams(primary_test="af2_model_1_multimer_tt_3rec"),
     )
@@ -37,7 +37,7 @@ def test_binder_default_end_to_end_logic(project_data):
         # Your initialized workflow settings
         workflow=workflow,
         # Name your pool of designs
-        pool_name="5ELI default binder test",
+        pool_name="5ELI ligandmpnn binder test",
         pool_description="",
         # see schedulers for available scheduler keys
         scheduler_key=TEST_SCHEDULER_KEY,
@@ -57,6 +57,8 @@ def test_binder_default_end_to_end_logic(project_data):
 
     designs = db.Design.select(pool_id=pool.id)
     design_ids = [d.id for d in designs]
+    assert design_ids[0].endswith("_seq1")
+    assert design_ids[1].endswith("_seq2")
 
     rag = db.select_descriptor_values(descriptors_rfdiffusion.RADIUS_OF_GYRATION.key, design_ids)
     assert len(rag) == 2
@@ -65,3 +67,7 @@ def test_binder_default_end_to_end_logic(project_data):
     af2_ipae = db.select_descriptor_values(descriptors_refolding.AF2_PRIMARY_IPAE.key, design_ids)
     assert len(af2_ipae) == 2
     assert (af2_ipae < 30).all()
+
+    rosetta_ddg = db.select_descriptor_values(descriptors_rfdiffusion.PYROSETTA_DDG.key, design_ids)
+    assert len(rosetta_ddg) == 2
+    assert not rosetta_ddg.isna().any()

@@ -10,9 +10,10 @@
       "type": "string",
       "description": "Directory containing PDB files to evaluate"
     },
-    "cyclic": {
+    "relax": {
       "type": "boolean",
-      "description": "Evaluate as macrocyclic peptide chain"
+      "description": "Apply FastRelax protocol before interface analysis",
+      "default": false
     },
     "publish_dir": {
       "type": "string"

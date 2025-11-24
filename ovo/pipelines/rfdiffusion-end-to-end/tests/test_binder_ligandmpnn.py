@@ -24,7 +24,6 @@ def test_5eli_binder_ligandmpnn():
             mpnn_run_parameters="--seed 42",
             mpnn_fastrelax_cycles=0,
             mpnn_num_sequences=2,
-            enable_pyrosetta_ddg=False,
             refolding_tests="af2_model_1_multimer_tt_3rec",
         ),
     )

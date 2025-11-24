@@ -360,14 +360,12 @@ def settings_step():
             key="num_designs",
         )
 
-        workflow.protein_mpnn_params.num_sequence_designs = st.number_input(
+        workflow.protein_mpnn_params.num_sequences = st.number_input(
             "Number of sequence designs per backbone (ProteinMPNN)",
             min_value=1,
             max_value=config.props.mpnn_sequences_limit,
-            value=workflow.protein_mpnn_params.num_sequence_designs
-            if workflow.protein_mpnn_params.num_sequence_designs
-            else 1,
-            key="num_sequence_designs",
+            value=workflow.protein_mpnn_params.num_sequences,
+            key="num_sequences",
         )
 
     show_rfdiffusion_advanced_settings(workflow)

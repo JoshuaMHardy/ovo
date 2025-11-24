@@ -13,6 +13,7 @@ from ovo.app.components.scheduler_components import wait_with_statusbar
 from ovo.app.components.submission_components import (
     pool_submission_inputs,
     review_workflow_submission,
+    show_rfdiffusion_binder_seq_design_inputs,
 )
 
 from ovo.app.pages import jobs_page, designs_page, rf_binder_design_page
@@ -46,14 +47,6 @@ def intro_step():
         workflow_name=RFdiffusionBinderDesignWorkflow.name,
         include_subclasses=True,
     )
-
-    if not config.props.pyrosetta_license:
-        st.warning(
-            "LigandMPNN enabled for sequence generation. "
-            "If you want to use PyRosetta FastRelax for interface side-chains relaxation and "
-            "you have a license (or in case of non-commercial use), "
-            "enable props.pyrosetta_license in your config.yml"
-        )
 
     with st.container(width=850):
         st.markdown(
@@ -372,7 +365,9 @@ def preview_step():
 
     if st.button(":material/wand_stars: Generate preview"):
         with st.spinner("Submitting RFdiffusion job..."):
-            workflow.preview_job_id = submit_rfdiffusion_preview(workflow, partial_diffusion=True, timesteps=num_timesteps)
+            workflow.preview_job_id = submit_rfdiffusion_preview(
+                workflow, partial_diffusion=True, timesteps=num_timesteps
+            )
 
     # Check if needed parameters are set
     if not workflow.preview_job_id:
@@ -444,13 +439,7 @@ def settings_step():
         )
 
     with st.columns([1, 2])[0]:
-        workflow.protein_mpnn_params.num_sequence_designs = st.number_input(
-            "Number of FastRelax iterations (each will produce one additional sequence on top of the initial ProteinMPNN design)",
-            min_value=1,
-            max_value=5,
-            value=workflow.protein_mpnn_params.num_sequence_designs,
-            key="num_sequence_designs",
-        )
+        show_rfdiffusion_binder_seq_design_inputs(workflow)
 
     show_rfdiffusion_advanced_settings(workflow)
 

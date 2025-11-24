@@ -82,6 +82,7 @@ workflow {
             params.mpnn_run_parameters
         )
         mpnn_out = ProteinMPNN_Fast_Relax.out.pdb_dir
+        relax_before_ddg = false
     } else {
         LigandMpnn(
             BackboneMetrics.out.filtered_pdb_dir,
@@ -89,6 +90,7 @@ workflow {
             params.mpnn_run_parameters
         )
         mpnn_out = LigandMpnn.out.standardized_pdb_dir
+        relax_before_ddg = true
     }
 
     ProteinQC(
@@ -110,10 +112,10 @@ workflow {
         false
     )
 
-    if (params.enable_pyrosetta_ddg && params.design_type == "binder") {
+    if (!params.disable_pyrosetta_scoring && params.design_type == "binder") {
         PyRosettaInterfaceMetrics(
             mpnn_out,
-            false
+            relax_before_ddg
         )
     }
 }

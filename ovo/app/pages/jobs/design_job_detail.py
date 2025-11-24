@@ -91,7 +91,10 @@ def design_job_detail(pool_ids):
 
         # Show log automatically when in progress or failed
         if job.job_result != True:
-            with st.expander("Log output", expanded=len(pools) == 1 and job.job_result == False):
+            args = {}
+            if len(pools) == 1 and job.job_result == False:
+                args["expanded"] = True
+            with st.expander("Log output", **args):
                 with st.container(height=400):
                     scheduler = get_scheduler(job.scheduler_key)
                     st.code(scheduler.get_log(job.job_id))

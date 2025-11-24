@@ -21,7 +21,6 @@ def test_partial_diffusion_binder_fastrelax():
             rfdiffusion_contig="10-10/A11-11/2-2/A14-15/2-2/0 B60-64/B90-96/B116-120",
             rfdiffusion_run_parameters="diffuser.partial_T=20 inference.deterministic=True",
             mpnn_run_parameters="-seed 42",
-            enable_pyrosetta_ddg=True,
             mpnn_fastrelax_cycles=1,
             refolding_tests="af2_model_1_multimer_tt_3rec",
         ),

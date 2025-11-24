@@ -4,6 +4,12 @@ Taken from: https://github.com/RosettaCommons/RFDesign/blob/98f7435944068f0b8a86
 <ROSETTASCRIPTS>
     <SCOREFXNS>
         <ScoreFunction name="sfxn" weights="beta_nov16" />
+        <ScoreFunction name="sfxn_relax" weights="beta_nov16" >
+            <Reweight scoretype="arg_cation_pi" weight="3" />
+            <Reweight scoretype="approximate_buried_unsat_penalty" weight="5" />
+            <Set approximate_buried_unsat_penalty_burial_atomic_depth="3.5" />
+            <Set approximate_buried_unsat_penalty_hbond_energy_threshold="-0.5" />
+        </ScoreFunction>
     </SCOREFXNS>
 	<MOVERS>
         <SwitchChainOrder name="chain1only" chain_order="1" />
@@ -22,6 +28,7 @@ Taken from: https://github.com/RosettaCommons/RFDesign/blob/98f7435944068f0b8a86
         <Not name="Not_interface" selector="AB_interface" />
         <And name="actual_interface_chA" selectors="AB_interface,chainA" />
         <And name="actual_interface_chB" selectors="AB_interface,chainB" />
+        <And name="not_interface_chB" selectors="Not_interface,chainB" />
 
         <ResidueName name="apolar" residue_name3="ALA,CYS,PHE,ILE,LEU,MET,THR,PRO,VAL,TRP,TYR" />
 
@@ -31,11 +38,24 @@ Taken from: https://github.com/RosettaCommons/RFDesign/blob/98f7435944068f0b8a86
     </RESIDUE_SELECTORS>
 
     <TASKOPERATIONS>
+        <OperateOnResidueSubset name="restrict_target_not_interface" selector="not_interface_chB">
+            <PreventRepackingRLT/>
+        </OperateOnResidueSubset>
+        <LimitAromaChi2 name="limitchi2" chi2max="110" chi2min="70" include_trp="True" />
+        <ExtraRotamersGeneric name="ex1_ex2" ex1="1" ex2="1" />
+        <IncludeCurrent name="current" />
         <ProteinInterfaceDesign name="pack_long" design_chain1="0" design_chain2="0" jump="1" interface_distance_cutoff="15"/>
     </TASKOPERATIONS>
     <MOVERS>
 
         <TaskAwareMinMover name="min" scorefxn="sfxn" bb="0" chi="1" task_operations="pack_long" />
+        <FastRelax name="FastRelax" scorefxn="sfxn_relax" repeats="1" batch="false" ramp_down_constraints="false" cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" task_operations="current,ex1_ex2,restrict_target_not_interface,limitchi2" >
+            <MoveMap name="MM" >
+                <Chain number="1" chi="true" bb="true" />
+                <Chain number="2" chi="true" bb="false" />
+                <Jump number="1" setting="true" />
+            </MoveMap>
+        </FastRelax>
     </MOVERS>
 	<FILTERS>
 
@@ -127,6 +147,10 @@ Taken from: https://github.com/RosettaCommons/RFDesign/blob/98f7435944068f0b8a86
     </SIMPLE_METRICS>
 
 	<PROTOCOLS>
+		<!--
+			FastRelax is not used through protocol but loaded manually
+			<Add mover="FastRelax" />
+		-->
 		<Add filter="delta_buried_npsa_FAMILYVW" />
 		<Add filter="delta_buried_npsa" />
 		<Add filter="delta_exposed_hydrophobics" />

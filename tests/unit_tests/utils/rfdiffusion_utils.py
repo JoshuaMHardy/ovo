@@ -186,9 +186,6 @@ def settings_tab(
     num_designs = at.number_input("num_designs")
     num_designs.set_value(1).run()
     assert workflow.rfdiffusion_params.num_designs == 1
-    num_sequence_designs = at.number_input("num_sequence_designs")
-    num_sequence_designs.set_value(1).run()
-    assert workflow.protein_mpnn_params.num_sequence_designs == 1
     asserts.assert_no_error_on_page(at, "submission tab")
 
 

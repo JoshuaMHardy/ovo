@@ -23,7 +23,7 @@ def test_rfdiffusion_scaffold_design_workflow_get_params():
             run_parameters="inference.deterministic=True",
         ),
         protein_mpnn_params=ProteinMPNNParams(
-            num_sequence_designs=1,
+            num_sequences=1,
             sampling_temp=0.01,
         ),
         refolding_params=RefoldingParams(

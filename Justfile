@@ -39,7 +39,7 @@ unit-test tests="tests/unit_tests":
     {{RUN}} pytest {{tests}}
 
 # Run workflow tests (using full OVO logic including DB entries and processing logic)
-workflow-test +tests="tests/workflows":
+integration-test +tests="tests/integration_tests":
     {{RUN}} pytest -s {{tests}}
 
 # Run pipeline tests (submit scheduler jobs and check results)

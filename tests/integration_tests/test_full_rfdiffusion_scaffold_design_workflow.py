@@ -24,7 +24,7 @@ def test_scaffold_end_to_end_logic(project_data):
             timesteps=1,  # use 1 diffusion iteration for faster testing
         ),
         protein_mpnn_params=ProteinMPNNParams(
-            num_sequence_designs=2,
+            num_sequences=2,
             sampling_temp=0.1,
             run_parameters="--seed 42",
         ),

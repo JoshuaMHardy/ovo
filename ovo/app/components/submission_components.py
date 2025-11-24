@@ -4,7 +4,7 @@ import os
 import streamlit as st
 
 from ovo import config, db, schedulers
-from ovo.core.database.models_rfdiffusion import RFdiffusionWorkflow
+from ovo.core.database.models_rfdiffusion import RFdiffusionWorkflow, ProteinMPNNParams
 from ovo.app.components.acceptance_thresholds_components import thresholds_input_component
 from ovo.app.components.navigation import open_first_section
 from ovo.app.utils.bindcraft_utils import load_json_from_file, get_dict_diff, merge_dictionaries
@@ -213,13 +213,64 @@ def create_new_round_dialog():
         st.rerun()
 
 
+def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
+    seq_design_options = {
+        "ligandmpnn": "LigandMPNN (ProteinMPNN weights)",
+        "fastrelax": "ProteinMPNN-FastRelax",
+    }
+    if workflow.protein_mpnn_params.fastrelax_cycles:
+        seq_design_method = "fastrelax"
+    else:
+        seq_design_method = "ligandmpnn"
+    options = list(seq_design_options)
+    seq_design_method = st.radio(
+        "Sequence design method",
+        options=options,
+        format_func=seq_design_options.get,
+        index=options.index(seq_design_method) if seq_design_method in options else None,
+        key="seq_design_method",
+    )
+    if seq_design_method == "fastrelax":
+        if not config.props.pyrosetta_license:
+            st.error(
+                "Use of the PyRosetta license is disabled in this instance of OVO. "
+                "If you want to use PyRosetta FastRelax for interface side-chains relaxation and "
+                "you have a license (or in case of non-commercial use), "
+                "enable props.pyrosetta_license in your config.yml"
+            )
+            st.stop()
+        if workflow.protein_mpnn_params.fastrelax_cycles == 0:
+            # Initialize at 3 cycles
+            workflow.protein_mpnn_params.fastrelax_cycles = 3
+        workflow.protein_mpnn_params.num_sequences = 1
+        workflow.protein_mpnn_params.fastrelax_cycles = st.number_input(
+            "Number of FastRelax cycles (each will produce one additional sequence on top of the initial ProteinMPNN design)",
+            min_value=1,
+            max_value=5,
+            value=workflow.protein_mpnn_params.fastrelax_cycles,
+            key="fastrelax_cycles",
+        )
+    else:
+        if workflow.protein_mpnn_params.fastrelax_cycles:
+            # Re-initialize to default number of sequences when switching back from FastRelax
+            workflow.protein_mpnn_params.num_sequences = ProteinMPNNParams().num_sequences
+            workflow.protein_mpnn_params.fastrelax_cycles = 0
+        workflow.protein_mpnn_params.num_sequences = st.number_input(
+            f"Number of sequence designs per backbone ({seq_design_options[seq_design_method]})",
+            min_value=1,
+            max_value=config.props.mpnn_sequences_limit,
+            value=workflow.protein_mpnn_params.num_sequences,
+            key="num_sequences",
+        )
+
+
 def show_rfdiffusion_advanced_settings(workflow: RFdiffusionWorkflow):
     #
     # FIXME remove this hack
     #
     if not config.props.pyrosetta_license:
         for key, threshold in workflow.acceptance_thresholds.items():
-            if "pyrosetta" in key and threshold.enabled:
+            if "rosetta" in key and threshold.enabled:
                 st.warning(f"Disabling PyRosetta acceptance threshold as PyRosetta license is not available: {key}")
                 threshold.enabled = False
     #

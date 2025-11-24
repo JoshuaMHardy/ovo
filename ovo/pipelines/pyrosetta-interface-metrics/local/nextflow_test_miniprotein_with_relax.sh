@@ -11,7 +11,7 @@ MODELS_DIR=${OVO_HOME:-~/ovo}/reference_files
 WORK_DIR=${OVO_HOME:-~/ovo}/workdir/work
 DEFAULT_CONFIG=$(pwd)/../../nextflow_default.config
 OVO_MODULE_PATH=$(realpath "$PWD/../../../")
-INPUT_DIR=$(pwd)/test-input
+INPUT_DIR=$(pwd)/test-input-minibinder
 OUTPUT_DIR=$(pwd)/test-results
 CONFIG=$(pwd)/test.config
 
@@ -28,7 +28,7 @@ nextflow run ../../main.nf \
   -config "$DEFAULT_CONFIG" \
   --shared_modules "ovo:$OVO_MODULE_PATH" \
   --max_memory 8GB \
-  --cyclic \
+  --relax \
   --pdb_dir $INPUT_DIR \
   --publish_dir $OUTPUT_DIR \
   $@
