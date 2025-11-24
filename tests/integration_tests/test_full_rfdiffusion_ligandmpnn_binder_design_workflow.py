@@ -28,7 +28,9 @@ def test_binder_default_end_to_end_logic(project_data):
             sampling_temp=0.1,
             run_parameters="--seed 42",
         ),
-        refolding_params=RefoldingParams(primary_test="af2_model_1_multimer_tt_3rec"),
+        refolding_params=RefoldingParams(
+            primary_test="af2_model_1_multimer_tt_3rec",
+        ),
     )
     workflow.validate()
     workflow.get_table_row()
