@@ -220,13 +220,17 @@ class RFdiffusionWorkflow(DesignWorkflow, RefoldingSupportedDesignWorkflow):
         has_multiple_inputs = len(self.rfdiffusion_params.input_pdb_paths) > 1
         has_multiple_contigs = len(self.rfdiffusion_params.contigs) > 1
         if has_multiple_inputs and has_multiple_contigs:
-            raise ValueError("Expected single contig or single input PDB, got multiple of both")
-        if has_multiple_contigs:
-            # When workflow has multiple contigs, it must only have a single PDB input
-            return self.rfdiffusion_params.input_pdb_paths[0]
-        else:
+            assert len(self.rfdiffusion_params.input_pdb_paths) == len(self.rfdiffusion_params.contigs), (
+                "When multiple input PDBs and multiple contigs are provided, "
+                f"their counts must match. Got: {len(self.rfdiffusion_params.input_pdb_paths)} PDBs "
+                f"and {len(self.rfdiffusion_params.contigs)} contigs."
+            )
+        if has_multiple_inputs:
             # When workflow has a single contig, the contig_index corresponds to PDB input index
             return self.rfdiffusion_params.input_pdb_paths[contig_index]
+        else:
+            # When workflow has multiple contigs, it must only have a single PDB input
+            return self.rfdiffusion_params.input_pdb_paths[0]
 
     def get_contig(self, contig_index=0):
         return self.rfdiffusion_params.contigs[contig_index] if self.rfdiffusion_params.contigs else ""

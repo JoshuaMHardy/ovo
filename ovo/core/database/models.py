@@ -701,7 +701,11 @@ class NumericDescriptor(Descriptor, ABC):
     def get_plot_range(self, values: pd.Series, padding=0.05) -> tuple[float, float] | None:
         """Return range for the plot based on min_value, max_value with additional padding"""
         min_value = self.min_value if self.min_value is not None else values.min()
+        if not pd.isna(values.min()) and values.min() < min_value:
+            min_value = values.min()
         max_value = self.max_value if self.max_value is not None else values.max()
+        if not pd.isna(values.max()) and values.max() > max_value:
+            max_value = values.max()
         padding_value = (max_value - min_value) * padding
         return min_value - padding_value, max_value + padding_value
 

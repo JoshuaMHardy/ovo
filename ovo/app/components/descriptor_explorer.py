@@ -180,5 +180,8 @@ def descriptor_explorer(
             overlay=overlay,
         )
 
-    use_container_width = single_design
-    st.altair_chart(fig, use_container_width=use_container_width, key=f"descriptor_histogram_{key_prefix}")
+    st.altair_chart(
+        fig,
+        width="stretch" if single_design else "content",
+        key=f"descriptor_histogram_{key_prefix}",
+    )

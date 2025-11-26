@@ -22,4 +22,5 @@ secrets.toml
 .ipynb_checkpoints
 *.global_config
 /docs/build
-/docs/source/apidocs
+/docs/source/apidocs/ovo
+/Makefile

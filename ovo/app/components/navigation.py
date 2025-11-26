@@ -314,7 +314,7 @@ def design_navigation_selector(
         idx = 0
     element_key = f"{key}_selectbox_{idx}"
 
-    with st.container(horizontal=True):
+    with st.container(horizontal=True, gap="small"):
         if st.button(
             ":material/arrow_back_ios:",
             key=f"previous_design_btn_{key}",
@@ -324,14 +324,7 @@ def design_navigation_selector(
             idx = previous_design_idx(idx)
             element_key = f"{key}_selectbox_{idx}"
 
-        # TODO not sure how else to format other than using a button
-        st.button(
-            f"{idx + 1} / {len(design_ids):,}",
-            type="tertiary",
-            key="no_action",
-            width="content",
-            disabled=True,
-        )
+        count_container = st.container(width=75, horizontal_alignment="center")
 
         if st.button(
             ":material/arrow_forward_ios:",
@@ -341,6 +334,17 @@ def design_navigation_selector(
         ):
             idx = next_design_idx(idx, len(design_ids) - 1)
             element_key = f"{key}_selectbox_{idx}"
+
+        with count_container:
+            # Write count later so that the idx is at the most recent value
+            # TODO not sure how else to format other than using a button
+            st.button(
+                f"{idx + 1} / {len(design_ids):,}",
+                type="tertiary",
+                key="no_action",
+                width="content",
+                disabled=True,
+            )
 
         design_id = st.selectbox(
             "Select a design",

@@ -347,6 +347,25 @@ def rfdiffusion_multiple_binder_designs_visualization(all_design_ids: list[str],
 
 
 def rfdiffusion_binder_design_visualization(design_id: str):
+    design: Design = get_cached_design(design_id)
+    pool = get_cached_pool(design.pool_id)
+    design_job = get_cached_design_job(pool.design_job_id)
+    workflow: RFdiffusionBinderDesignWorkflow = design_job.workflow
+    paths = (
+        get_cached_design_descriptors(
+            design_id,
+            [
+                descriptors_rfdiffusion.RFDIFFUSION_TRB_PATH.key,
+                *[d.key for d in descriptors.STRUCTURE_PATH_DESCRIPTORS],
+            ],
+        )
+        .dropna()
+        .to_dict()
+    )
+    input_pdb_path = workflow.get_input_pdb_path(design.contig_index)
+
+    st.write(f"Input structure: **{os.path.basename(input_pdb_path)}**")
+
     show_design_metrics(
         design_id,
         descriptor_keys=[
@@ -362,22 +381,6 @@ def rfdiffusion_binder_design_visualization(design_id: str):
             descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.key,
             descriptors_refolding.AF2_PRIMARY_PLDDT.key,
         ],
-    )
-
-    design: Design = get_cached_design(design_id)
-    pool = get_cached_pool(design.pool_id)
-    design_job = get_cached_design_job(pool.design_job_id)
-    workflow: RFdiffusionBinderDesignWorkflow = design_job.workflow
-    paths = (
-        get_cached_design_descriptors(
-            design_id,
-            [
-                descriptors_rfdiffusion.RFDIFFUSION_TRB_PATH.key,
-                *[d.key for d in descriptors.STRUCTURE_PATH_DESCRIPTORS],
-            ],
-        )
-        .dropna()
-        .to_dict()
     )
 
     # TODO use target spec for this
@@ -492,7 +495,7 @@ def rfdiffusion_binder_design_visualization(design_id: str):
     with left:
         st.write("##### Input structure aligned to prediction")
 
-        input_pdb_str = storage.read_file_str(workflow.get_input_pdb_path(design.contig_index))
+        input_pdb_str = storage.read_file_str(input_pdb_path)
         prediction_str = storage.read_file_str(paths[prediction_descriptor.key])
 
         # here, manual alignment is needed

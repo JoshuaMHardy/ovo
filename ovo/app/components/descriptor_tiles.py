@@ -421,7 +421,7 @@ def descriptor_tiles(descriptors_df: pd.DataFrame, descriptors: List[Descriptor]
                             .configure_axis(grid=False)
                         )
 
-                    st.altair_chart(fig, use_container_width=True)
+                    st.altair_chart(fig, width="stretch")
 
                     with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
                         with st.container():

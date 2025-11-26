@@ -1,5 +1,5 @@
 from ovo import DesignSpec
-from ovo.core.utils.pdb import get_sequences_from_pdb_str
+from ovo.core.utils.pdb import get_sequences_from_pdb_str, get_pdb
 
 
 def test_design_spec_from_pdb(example_pdb_path):
@@ -15,3 +15,10 @@ def test_design_spec_from_pdb(example_pdb_path):
         spec.chains[0].sequence
         == "NTTVFQGVAGQSLQVSCPYDSMKHWGRRKAWCRQLGEKGPCQRVVSTHNLWLLSFLRRWNGSTAITDDTLGGTLTITLRNLQPHDAGLYQCQSLHGSEADTLRKVLVEVLAD"
     )
+
+
+def test_pdb_online_download():
+    content = get_pdb("5ELI")
+    assert b"HEADER" in content
+    content = get_pdb("Q9NZC2")
+    assert b"HEADER" in content

@@ -857,11 +857,11 @@ def fix_contigs(contigs, parsed_pdb):
     return [fix_contig(x) for x in contigs]
 
 
-def get_pdb(pdb_code: str):
+def get_pdb(pdb_code: str) -> bytes:
     if len(pdb_code) == 4:
         base_url = f"https://files.rcsb.org/download/{pdb_code}.pdb"
     else:
-        base_url = f"https://alphafold.ebi.ac.uk/files/AF-{pdb_code.upper()}-F1-model_v3.pdb"
+        base_url = f"https://alphafold.ebi.ac.uk/files/AF-{pdb_code.upper()}-F1-model_v6.pdb"
 
     # NO_VERIFY_SSL is set to true in gh action for testing purposes (problem with self-signed certificate)
     response = requests.get(base_url, verify=not os.getenv("NO_VERIFY_SSL", False))

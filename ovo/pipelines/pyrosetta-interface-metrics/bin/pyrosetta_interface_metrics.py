@@ -34,6 +34,7 @@ p.add_argument(
     help="Suffix on outputs to process. e.g. if --suffix=complex, then only processes files named *complex.pdb",
 )
 p.add_argument("--relax", action="store_true", default=False, help="Relax structures before scoring")
+p.add_argument("--out-pdb", help="Save PDB structures to this directory after applying movers")
 p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
 args = p.parse_args()
 
@@ -63,6 +64,12 @@ def calculate(pdb_path):
         protocol = parser.generate_mover(protocol_path)
         # Apply movers
         protocol.apply(pose)
+
+        if args.out_pdb:
+            os.makedirs(args.out_pdb, exist_ok=True)
+            # save pose
+            pose.dump_pdb(os.path.join(args.out_pdb, str(basename) + "_relaxed.pdb"))
+
         print("SCORES", pose.scores)
         for k, v in pose.scores.items():
             row[k] = float(v)

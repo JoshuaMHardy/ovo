@@ -185,7 +185,7 @@ def descriptor_histogram_component(descriptor_values: pd.Series, descriptor: Des
     fig.layout.margin["b"] = 0
     fig.layout.margin["t"] = 0
 
-    st.plotly_chart(fig, use_container_width=False)
+    st.plotly_chart(fig, width="content")
 
 
 @st.cache_data(ttl="1h")

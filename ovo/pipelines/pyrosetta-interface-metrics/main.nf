@@ -16,16 +16,18 @@ process PyRosettaInterfaceMetrics {
     val relax
   output:
     path "${batch_name}/pyrosetta_interface_metrics.jsonl", emit: metrics_csv
+    path "${batch_name}/relaxed_pdb", emit: relaxed_pdb
   script:
   """
   set -euxo pipefail
 
   mkdir -p ${batch_name}
 
+  mkdir "${batch_name}/relaxed_pdb"
   python3 ${moduleDir}/bin/pyrosetta_interface_metrics.py \
     ${pdb_dir} \
 	${batch_name}/pyrosetta_interface_metrics.jsonl \
-	${relax ? "--relax" : ""}
+	${relax ? "--relax --out-pdb ${batch_name}/relaxed_pdb" : ""}
   """
 }
 

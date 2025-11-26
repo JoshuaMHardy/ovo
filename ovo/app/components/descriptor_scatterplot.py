@@ -206,7 +206,7 @@ def descriptor_scatterplot_design_explorer_component(settings: PlotSettings, des
     )
 
     fig.update_layout(dragmode="select")
-    event = st.plotly_chart(fig, on_select="rerun", use_container_width=False, key="scatterplot")
+    event = st.plotly_chart(fig, on_select="rerun", width="content", key="scatterplot")
 
     # descriptor to create a subpool from lasso/box selected designs
     if not event["selection"]["box"] and not event["selection"]["lasso"]:
@@ -399,7 +399,7 @@ def descriptor_scatterplot_pool_details_component(
             )
 
     fig.update_layout(dragmode="select")
-    event = st.plotly_chart(fig, on_select="rerun", use_container_width=False, key="scatterplot")
+    event = st.plotly_chart(fig, on_select="rerun", width="content", key="scatterplot")
 
     if not event["selection"]["box"] and not event["selection"]["lasso"]:
         return design_ids, None
