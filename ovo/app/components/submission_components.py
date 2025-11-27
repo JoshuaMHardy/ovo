@@ -220,11 +220,11 @@ def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
     }
     captions = {
         "ligandmpnn": "Sequence design with ProteinMPNN model through its LigandMPNN re-implementation. "
-                      "Designs will not be relaxed as part of sequence design, only repacked with LigandMPNN OpenMM logic. "
-                      "Designs that pass refolding criteria will be relaxed during ddG scoring.",
+        "Designs will not be relaxed as part of sequence design, only repacked with LigandMPNN OpenMM logic. "
+        "Designs that pass refolding criteria will be relaxed during ddG scoring.",
         "fastrelax": "Cycles of ProteinMPNN design followed by Rosetta FastRelax relaxation "
-                     "based on Bennet et al. 2023 'Improving de novo protein binder design with deep learning'. "
-                     "Sequences from all cycles are kept.",
+        "based on Bennet et al. 2023 'Improving de novo protein binder design with deep learning'. "
+        "Sequences from all cycles are kept.",
     }
     if workflow.protein_mpnn_params.fastrelax_cycles:
         seq_design_method = "fastrelax"
@@ -260,9 +260,11 @@ def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
                 value=workflow.protein_mpnn_params.fastrelax_cycles,
                 key="fastrelax_cycles",
             )
-        st.caption("Note: Compared to Bennet et al. 2023, we skip the last ProteinMPNN design step "
-                   "so that all designs have undergone relaxation consistently. For example, with 2 cycles, "
-                   "the workflow actually performs (Design + Relax) * 2 instead of (Design + Relax) * 2 + Design.")
+        st.caption(
+            "Note: Compared to Bennet et al. 2023, we skip the last ProteinMPNN design step "
+            "so that all designs have undergone relaxation consistently. For example, with 2 cycles, "
+            "the workflow actually performs (Design + Relax) * 2 instead of (Design + Relax) * 2 + Design."
+        )
     else:
         if workflow.protein_mpnn_params.fastrelax_cycles:
             # Re-initialize to default number of sequences when switching back from FastRelax
