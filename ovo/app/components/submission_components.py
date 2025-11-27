@@ -218,6 +218,14 @@ def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
         "ligandmpnn": "LigandMPNN (ProteinMPNN weights)",
         "fastrelax": "ProteinMPNN-FastRelax",
     }
+    captions = {
+        "ligandmpnn": "Sequence design with ProteinMPNN model through its LigandMPNN re-implementation. "
+                      "Designs will not be relaxed as part of sequence design, only repacked with LigandMPNN OpenMM logic. "
+                      "Designs that pass refolding criteria will be relaxed during ddG scoring.",
+        "fastrelax": "Cycles of ProteinMPNN design followed by Rosetta FastRelax relaxation "
+                     "based on Bennet et al. 2023 'Improving de novo protein binder design with deep learning'. "
+                     "Sequences from all cycles are kept.",
+    }
     if workflow.protein_mpnn_params.fastrelax_cycles:
         seq_design_method = "fastrelax"
     else:
@@ -228,6 +236,7 @@ def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
         options=options,
         format_func=seq_design_options.get,
         index=options.index(seq_design_method) if seq_design_method in options else None,
+        captions=[captions[o] for o in options],
         key="seq_design_method",
     )
     if seq_design_method == "fastrelax":
@@ -243,25 +252,30 @@ def show_rfdiffusion_binder_seq_design_inputs(workflow: RFdiffusionWorkflow):
             # Initialize at 3 cycles
             workflow.protein_mpnn_params.fastrelax_cycles = 3
         workflow.protein_mpnn_params.num_sequences = 1
-        workflow.protein_mpnn_params.fastrelax_cycles = st.number_input(
-            "Number of FastRelax cycles (each will produce one additional sequence on top of the initial ProteinMPNN design)",
-            min_value=1,
-            max_value=5,
-            value=workflow.protein_mpnn_params.fastrelax_cycles,
-            key="fastrelax_cycles",
-        )
+        with st.columns([1, 2])[0]:
+            workflow.protein_mpnn_params.fastrelax_cycles = st.number_input(
+                "Number of FastRelax cycles (ProteinMPNN design followed by FastRelax relaxation)",
+                min_value=1,
+                max_value=5,
+                value=workflow.protein_mpnn_params.fastrelax_cycles,
+                key="fastrelax_cycles",
+            )
+        st.caption("Note: Compared to Bennet et al. 2023, we skip the last ProteinMPNN design step "
+                   "so that all designs have undergone relaxation consistently. For example, with 2 cycles, "
+                   "the workflow actually performs (Design + Relax) * 2 instead of (Design + Relax) * 2 + Design.")
     else:
         if workflow.protein_mpnn_params.fastrelax_cycles:
             # Re-initialize to default number of sequences when switching back from FastRelax
             workflow.protein_mpnn_params.num_sequences = ProteinMPNNParams().num_sequences
             workflow.protein_mpnn_params.fastrelax_cycles = 0
-        workflow.protein_mpnn_params.num_sequences = st.number_input(
-            f"Number of sequence designs per backbone ({seq_design_options[seq_design_method]})",
-            min_value=1,
-            max_value=config.props.mpnn_sequences_limit,
-            value=workflow.protein_mpnn_params.num_sequences,
-            key="num_sequences",
-        )
+        with st.columns([1, 2])[0]:
+            workflow.protein_mpnn_params.num_sequences = st.number_input(
+                f"Number of sequence designs per backbone",
+                min_value=1,
+                max_value=config.props.mpnn_sequences_limit,
+                value=workflow.protein_mpnn_params.num_sequences,
+                key="num_sequences",
+            )
 
 
 def show_rfdiffusion_advanced_settings(workflow: RFdiffusionWorkflow):

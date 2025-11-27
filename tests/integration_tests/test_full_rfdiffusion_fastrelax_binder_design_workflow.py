@@ -25,7 +25,7 @@ def test_binder_default_end_to_end_logic(project_data):
         ),
         protein_mpnn_params=ProteinMPNNParams(
             num_sequences=1,
-            fastrelax_cycles=1,
+            fastrelax_cycles=2,
             sampling_temp=0.1,
             run_parameters="-seed 42",
         ),

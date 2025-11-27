@@ -396,6 +396,31 @@ def settings_step():
     pool_submission_inputs(__file__)
 
     with st.columns([1, 2])[0]:
+        is_admin = get_username() in config.auth.admin_users
+        workflow.rfdiffusion_params.num_designs = st.number_input(
+            "Number of structure designs (RFdiffusion backbones) per each input structure",
+            min_value=1,
+            max_value=config.props.rfdiffusion_backbones_limit_admin
+            if is_admin
+            else config.props.rfdiffusion_backbones_limit,
+            value=workflow.rfdiffusion_params.num_designs,
+            key="num_designs",
+        )
+
+    show_rfdiffusion_binder_seq_design_inputs(workflow)
+
+    with st.columns([1, 2])[0]:
+        workflow.rfdiffusion_params.model_weights = st.selectbox(
+            "Model weights",
+            help="Use 'active site' model weights to hold better selected residues specified in the contig.",
+            index=MODEL_WEIGHTS_BINDER.index(workflow.rfdiffusion_params.model_weights)
+            if workflow.rfdiffusion_params.model_weights
+            else 0,
+            key="active_site",
+            options=MODEL_WEIGHTS_BINDER,
+        )
+
+    with st.columns([1, 2])[0]:
         workflow.rfdiffusion_params.hotspots = st.text_input(
             "Hotspot residues (optional)",
             placeholder="For example B123,B124,B131",
@@ -414,32 +439,6 @@ def settings_step():
         :material/info: Note that any hotspots used in the original design were not carried over.
         Hotspots should be specified in the context of the designed structure (binder in chain A, target in chain B).
         """)
-
-    with st.columns([1, 2])[0]:
-        workflow.rfdiffusion_params.model_weights = st.selectbox(
-            "Model weights",
-            help="Use 'active site' model weights to hold better selected residues specified in the contig.",
-            index=MODEL_WEIGHTS_BINDER.index(workflow.rfdiffusion_params.model_weights)
-            if workflow.rfdiffusion_params.model_weights
-            else 0,
-            key="active_site",
-            options=MODEL_WEIGHTS_BINDER,
-        )
-
-    with st.columns([1, 2])[0]:
-        is_admin = get_username() in config.auth.admin_users
-        workflow.rfdiffusion_params.num_designs = st.number_input(
-            "Number of structure designs (RFdiffusion backbones) per each input structure",
-            min_value=1,
-            max_value=config.props.rfdiffusion_backbones_limit_admin
-            if is_admin
-            else config.props.rfdiffusion_backbones_limit,
-            value=workflow.rfdiffusion_params.num_designs,
-            key="num_designs",
-        )
-
-    with st.columns([1, 2])[0]:
-        show_rfdiffusion_binder_seq_design_inputs(workflow)
 
     show_rfdiffusion_advanced_settings(workflow)
 

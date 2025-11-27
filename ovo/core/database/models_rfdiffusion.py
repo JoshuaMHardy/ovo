@@ -370,7 +370,7 @@ class RFdiffusionBinderDesignWorkflow(RFdiffusionWorkflow):
             descriptors_refolding.AF2_PRIMARY_IPAE.key: Threshold(max_value=10.0),
             descriptors_refolding.AF2_PRIMARY_TARGET_ALIGNED_BINDER_RMSD.key: Threshold(max_value=2.0),
             descriptors_refolding.AF2_PRIMARY_PLDDT_BINDER.key: Threshold(min_value=80),
-            descriptors_rfdiffusion.PYROSETTA_DDG.key: Threshold(max_value=-20.0),
+            descriptors_rfdiffusion.PYROSETTA_DDG.key: Threshold(max_value=-30.0),
             descriptors_rfdiffusion.N_CONTACTS_TO_HOTSPOTS.key: Threshold(min_value=1, enabled=False),
             descriptors_refolding.AF2_PRIMARY_BINDER_PAE.key: Threshold(max_value=5.0, enabled=False),
             descriptors_rfdiffusion.PYROSETTA_CMS.key: Threshold(enabled=False),

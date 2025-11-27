@@ -81,3 +81,6 @@ format-check:
 
 docs:
     cd docs; {{RUN}} make html
+
+html-docs: docs
+    open docs/build/html/index.html

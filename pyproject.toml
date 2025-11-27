@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ovo"
+name = "ovo-app"
 version = "1.0.0-alpha.1"
 description = "OVO: an open-source ecosystem for de novo protein design"
 readme = "README.md"

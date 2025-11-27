@@ -379,18 +379,18 @@ class ProteinMPNN_runner:
                 tag = f"{prefix}_0_cycle{cycle}"
                 self.struct_manager.dump_pose(sample_feats.pose, tag)
 
-        seqs_scores = self.sequence_optimize(sample_feats)
-
-        seq, mpnn_score = seqs_scores[0]  # We know there is only one entry
-        sample_feats.thread_mpnn_seq(seq)
-
         # NOTE this is a change compared to the dl_binder_design repository
-        # We relax the final pose - this enables running ddG calculation directly on the designed structure
-        # Designs from intermediate cycles were already relaxed so this also ensures consistency.
-        self.relax_pose(mover, sample_feats)
-
-        tag = f"{prefix}_0_cycle{args.relax_cycles}"
-        self.struct_manager.dump_pose(sample_feats.pose, tag)
+        # We do not perform this last sequence design - this ensures all designs are relaxed,
+        # which enables running ddG calculation directly on the designed structure
+        # Designs from intermediate cycles were already relaxed so this ensures consistency.
+        #
+        # seqs_scores = self.sequence_optimize(sample_feats)
+        #
+        # seq, mpnn_score = seqs_scores[0]  # We know there is only one entry
+        # sample_feats.thread_mpnn_seq(seq)
+        #
+        # tag = f"{prefix}_0_cycle{args.relax_cycles}"
+        # self.struct_manager.dump_pose(sample_feats.pose, tag)
 
     def run_model(self, tag, args):
         t0 = time.time()

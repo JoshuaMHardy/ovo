@@ -216,7 +216,7 @@ def process_rfdiffusion_design(
         mpnn_pdb_template = "proteinmpnn_fastrelax/{backbone_filename}_standardized_dldesign_0_cycle{idx_sequence}"
         seq_id_template = "_cycle{idx_sequence}"
         sequence_design_descriptor = descriptors_rfdiffusion.FASTRELAX_STRUCTURE_PATH
-        num_seqs_total = num_fastrelax_cycles + 1
+        num_seqs_total = num_fastrelax_cycles
     else:
         mpnn_pdb_template = "ligandmpnn/standardized_pdb/{backbone_filename}_standardized_packed_{num_sequence}_1"
         seq_id_template = "_seq{num_sequence}"

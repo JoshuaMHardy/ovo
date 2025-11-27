@@ -1850,7 +1850,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ovo"
+name = "ovo-app"
 version = "1.0.0a1"
 source = { editable = "." }
 dependencies = [

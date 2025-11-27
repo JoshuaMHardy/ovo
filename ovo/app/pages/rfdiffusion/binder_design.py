@@ -140,8 +140,9 @@ and by comparing the binder pose from RFdiffusion backbone to the AlphaFold2 pre
 |-------------|-------------|-------------|-------------|
 | RFdiffusion | Backbone generation       | Trimmed target protein, hotspots (optional), binder length | Complex backbone structure |
 | FastRelax–ProteinMPNN  | Sequence generation and side-chain rotamer prediction | Complex backbone structure with target sequence | Binder sequence and complex structure with side-chains |
-| AlphaFold2  | Refolding evaluation (via structure prediction)      | Designed sequence, FastRelax structure | Structure |
-| PyRosetta   | Additional descriptors used for filtering  |  FastRelax structure  | Complex binding energy, Contact molecular surface, and other descriptors  |
+| LigandMPNN  | Sequence generation and side-chain rotamer prediction | Backbone structure | Binder sequence and complex structure with side-chains |
+| AlphaFold2  | Refolding evaluation (via structure prediction)      | Designed sequence & structure | Predicted structure |
+| PyRosetta   | Additional descriptors used for filtering  |  Designed sequence & structure  | Complex binding energy, Contact molecular surface, and other descriptors  |
 
 **Details** 
                
@@ -320,6 +321,31 @@ def settings_step():
 
     pool_submission_inputs(__file__)
 
+    with st.columns([1, 2])[0]:
+        is_admin = get_username() in config.auth.admin_users
+        workflow.rfdiffusion_params.num_designs = st.number_input(
+            "Number of structure designs (RFdiffusion backbones)",
+            min_value=1,
+            max_value=config.props.rfdiffusion_backbones_limit_admin
+            if is_admin
+            else config.props.rfdiffusion_backbones_limit,
+            value=workflow.rfdiffusion_params.num_designs,
+            key="num_designs",
+        )
+
+    show_rfdiffusion_binder_seq_design_inputs(workflow)
+
+    with st.columns([1, 2])[0]:
+        workflow.rfdiffusion_params.model_weights = st.selectbox(
+            "Model weights",
+            help="Use 'active site' model weights to hold better selected residues specified in the contig.",
+            index=MODEL_WEIGHTS_BINDER.index(workflow.rfdiffusion_params.model_weights)
+            if workflow.rfdiffusion_params.model_weights
+            else 0,
+            key="active_site",
+            options=MODEL_WEIGHTS_BINDER,
+        )
+
     contig = st.text_input(
         "Contig",
         placeholder="A123-456/0 20-40",
@@ -351,32 +377,6 @@ def settings_step():
                 re.fullmatch("[A-Z][0-9]+", hotspot) for hotspot in workflow.rfdiffusion_params.hotspots.split(",")
             ):
                 st.error("Invalid hotspots format, expected 'A123,A124,A131'")
-
-    with st.columns([1, 2])[0]:
-        workflow.rfdiffusion_params.model_weights = st.selectbox(
-            "Model weights",
-            help="Use 'active site' model weights to hold better selected residues specified in the contig.",
-            index=MODEL_WEIGHTS_BINDER.index(workflow.rfdiffusion_params.model_weights)
-            if workflow.rfdiffusion_params.model_weights
-            else 0,
-            key="active_site",
-            options=MODEL_WEIGHTS_BINDER,
-        )
-
-    with st.columns([1, 2])[0]:
-        is_admin = get_username() in config.auth.admin_users
-        workflow.rfdiffusion_params.num_designs = st.number_input(
-            "Number of structure designs (RFdiffusion backbones)",
-            min_value=1,
-            max_value=config.props.rfdiffusion_backbones_limit_admin
-            if is_admin
-            else config.props.rfdiffusion_backbones_limit,
-            value=workflow.rfdiffusion_params.num_designs,
-            key="num_designs",
-        )
-
-    with st.columns([1, 2])[0]:
-        show_rfdiffusion_binder_seq_design_inputs(workflow)
 
     show_rfdiffusion_advanced_settings(workflow)
 

@@ -58,8 +58,7 @@ Verify: `java -version`
 First, install OVO using:
 
 ```sh
-# TEMPORARY: install from .tar.gz file until OVO is published on PyPI
-pip install https://ovo.dichlab.org/public/ovo-1.0.0a1.tar.gz
+pip install ovo-app
 ```
 
 <details>
@@ -70,8 +69,7 @@ pip install https://ovo.dichlab.org/public/ovo-1.0.0a1.tar.gz
 conda create -n ovo python=3.13
 conda activate ovo
 # Install OVO with pip
-# TEMPORARY: install from .tar.gz file until OVO is published on PyPI
-pip install https://ovo.dichlab.org/public/ovo-1.0.0a1.tar.gz
+pip install ovo-app
 ```
 </details>
 
