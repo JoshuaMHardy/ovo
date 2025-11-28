@@ -351,8 +351,9 @@ class Workflow:
         raise NotImplementedError()
 
     @abstractmethod
-    def process_results(self, job: Union["DesignJob", "DescriptorJob"], callback: Callable = None):
-        """Process results of a successful workflow - download files from workdir, save DesignJob, Pool and Designs"""
+    def process_results(self, job: Union["DesignJob", "DescriptorJob"], callback: Callable = None) -> list[Base]:
+        """Process results of a successful workflow - download files from workdir,
+        create and return objects to be saved such as Designs and DescriptorValues"""
         raise NotImplementedError()
 
     @classmethod

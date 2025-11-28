@@ -17,7 +17,9 @@ from ovo.cli.common import console, OVONotInitializedError
 from rich.panel import Panel
 import os
 import sys
-import importlib
+import importlib.metadata
+
+__version__ = importlib.metadata.version("ovo-app")
 
 try:
     config = load_config(home_dir=GLOBAL_OVO_HOME or os.getenv("OVO_HOME") or DEFAULT_OVO_HOME)

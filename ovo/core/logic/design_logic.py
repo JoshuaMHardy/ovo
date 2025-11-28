@@ -271,12 +271,14 @@ def process_results(design_job: DesignJob, callback: Callable = None, wait=True)
         raise ValueError(f"Job {design_job.job_id} has failed")
     # Process results
     print("Job finished, processing pool results...")
-    design_job.workflow.process_results(design_job, callback=callback)
+    objects = design_job.workflow.process_results(design_job, callback=callback)
+    assert isinstance(objects, list), f"Expected list from process_results(), got {type(objects).__name__}: {objects}"
     # Mark pool as processed
     pool.processed = True
     flag_modified(design_job, "workflow")
     flag_modified(design_job, "warnings")
-    db.save_all([pool, design_job])
+    # Atomically save all objects
+    db.save_all(objects + [pool, design_job])
     return pool
 
 

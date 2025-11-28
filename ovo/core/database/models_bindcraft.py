@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass, field
 from typing import Callable
 
-from ovo.core.database.models import DesignWorkflow, WorkflowParams, WorkflowTypes, DesignJob, Design
+from ovo.core.database.models import DesignWorkflow, WorkflowParams, WorkflowTypes, DesignJob, Design, Base
 from ovo.core.scheduler.base_scheduler import Scheduler
 from ovo.core.utils.residue_selection import from_segments_to_hotspots
 
@@ -110,11 +110,12 @@ class BindCraftBinderDesignWorkflow(DesignWorkflow):
 
         return prepare_bindcraft_params(self, workdir=workdir)
 
-    def process_results(self, job: DesignJob, callback: Callable = None):
-        """Process results of a successful workflow - download files from workdir, save DesignJob, Pool and Designs"""
+    def process_results(self, job: DesignJob, callback: Callable = None) -> list[Base]:
+        """Process results of a successful workflow - download files from workdir,
+        create Design and DescriptorValue objects"""
         from ovo.core.logic.design_logic_bindcraft import process_workflow_results
 
-        process_workflow_results(job=job, callback=callback)
+        return process_workflow_results(job=job, callback=callback)
 
     @classmethod
     def visualize_single_design_structures(cls, design_id: str):

@@ -6,7 +6,7 @@ from typing import Callable
 import pandas as pd
 
 from ovo import storage, Pool, Round, db, get_scheduler
-from ovo.core.database import DesignJob, DesignSpec, Design
+from ovo.core.database import DesignJob, DesignSpec, Design, Base
 from ovo.core.database.models_bindcraft import BindCraftBinderDesignWorkflow
 from ovo.app.utils.bindcraft_utils import load_json_from_file, merge_dictionaries
 from ovo.core.logic.descriptor_logic import read_descriptor_file_values, save_descriptor_job_for_design_job
@@ -54,7 +54,7 @@ def prepare_bindcraft_params(workflow: BindCraftBinderDesignWorkflow, workdir: s
     }
 
 
-def process_workflow_results(job: DesignJob, callback: Callable = None):
+def process_workflow_results(job: DesignJob, callback: Callable = None) -> list[Base]:
     pool = db.get(Pool, design_job_id=job.id)
     project_round = db.get(Round, id=pool.round_id)
     scheduler = get_scheduler(job.scheduler_key)
@@ -197,5 +197,4 @@ def process_workflow_results(job: DesignJob, callback: Callable = None):
         },
     )
 
-    # Save designs and descriptors atomically in one commit
-    db.save_all(designs + descriptor_values)
+    return designs + descriptor_values

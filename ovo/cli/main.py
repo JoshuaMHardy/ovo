@@ -1,6 +1,6 @@
 import typer
 from rich.panel import Panel
-from ovo import console
+from ovo import console, __version__
 from ovo.cli import init
 from ovo.cli import module
 from ovo.cli import app as app_cli
@@ -20,12 +20,13 @@ app.add_typer(scheduler_cli.app, name="scheduler")
 
 
 def main():
-    console.print("""
+    version = f"Version [green]{__version__}[/green]"
+    console.print(f"""
    ▄▀▀█▄  ▄▖   ▄▄  ▄▀▀█▄   
   █    █▄ █▌   ██ █▄▀▄▀█▄  
  █     ██  █▌ ██ █     ██  
   ▀▄▄▄█▀    ███   ▀▄▄▄█▀   
-            Version [green]0.0.1[/green]
+ {version.rjust(39)}
     """)
 
     try:

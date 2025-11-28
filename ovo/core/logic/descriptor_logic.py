@@ -231,12 +231,14 @@ def process_results(descriptor_job: DescriptorJob, callback: Callable = None, wa
         print(scheduler.get_log(descriptor_job.job_id))
         raise ValueError(f"Job {descriptor_job.job_id} has failed")
     # Process and save descriptor values
-    descriptor_job.workflow.process_results(descriptor_job, callback=callback)
+    objects = descriptor_job.workflow.process_results(descriptor_job, callback=callback)
+    assert isinstance(objects, list), f"Expected list from process_results(), got {type(objects).__name__}: {objects}"
     # Update processed flag
     descriptor_job.processed = True
     flag_modified(descriptor_job, "workflow")
     flag_modified(descriptor_job, "warnings")
-    db.save(descriptor_job)
+    # Save all atomically in one commit
+    db.save_all(objects + [descriptor_job])
 
 
 def read_descriptor_file_values(

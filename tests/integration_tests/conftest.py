@@ -18,7 +18,9 @@ def project_data():
     """Create one project and project_round for the entire test run."""
     from ovo import db, storage, Design, Pool
 
-    round_name = datetime.datetime.now().strftime("%a %d %b %Y")
+    # Use repo root directory name as round prefix
+    prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    round_name = prefix + " " + datetime.datetime.now().strftime("%a %d %b %Y")
 
     if not db.Project.count(name=TEST_PROJECT_NAME):
         project = db.Project(name=TEST_PROJECT_NAME, author="test", public=True)
@@ -33,6 +35,8 @@ def project_data():
         designs = db.Design.select(pool_id__in=[p.id for p in pools])
         db.DescriptorValue.remove(design_id__in=[d.id for d in designs])
         db.Design.remove(pool_id__in=[p.id for p in pools])
+        db.DesignJob.remove(id__in=[p.design_job_id for p in pools if p.design_job_id])
+        db.DescriptorJob.remove(round_id=project_round.id)
         db.Pool.remove(round_id=project_round.id)
         db.Round.remove(id=project_round.id)
 
@@ -45,17 +49,11 @@ def project_data():
 
     # Create a pool
     custom_pool = Pool(
-        id="test1",
+        id=Pool.generate_id(),
         round_id=project_round.id,
         name="Custom Upload",
         author="test",
     )
-    if db.count(Pool, id=custom_pool.id):
-        designs = db.Design.select(pool_id=custom_pool.id)
-        db.DescriptorValue.remove(design_id__in=[d.id for d in designs])
-        db.Design.remove(pool_id=custom_pool.id)
-        db.Pool.remove(id=custom_pool.id)
-
     db.save(custom_pool)
 
     # Create a test design

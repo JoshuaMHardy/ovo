@@ -3,7 +3,7 @@ from typing import List, Callable, Optional
 
 from ovo.core.database import DescriptorJob
 from ovo.core.database.descriptors_refolding import REFOLDING_TESTS_BY_TYPE
-from ovo.core.database.models import DescriptorWorkflow, WorkflowTypes
+from ovo.core.database.models import DescriptorWorkflow, WorkflowTypes, Base
 from ovo.core.scheduler.base_scheduler import Scheduler
 from dataclasses import dataclass, field
 
@@ -37,8 +37,7 @@ class RefoldingWorkflow(DescriptorWorkflow):
 
         return prepare_refolding_params(self, workdir=workdir)
 
-    def process_results(self, job: DescriptorJob, callback: Callable = None):
-        from ovo import db
+    def process_results(self, job: DescriptorJob, callback: Callable = None) -> list[Base]:
         from ovo.core.logic.descriptor_logic import read_descriptor_file_values
 
         descriptor_values = read_descriptor_file_values(
@@ -48,7 +47,7 @@ class RefoldingWorkflow(DescriptorWorkflow):
             # mapping from design.id to ID column in produced file
             design_id_mapping={design_id: design_id for design_id in self.design_ids},
         )
-        db.save_all(descriptor_values + [job])
+        return descriptor_values + [job]
 
     def validate(self):
         super().validate()

@@ -64,13 +64,13 @@ def test_binder_default_end_to_end_logic(project_data):
     assert design_ids[1].endswith("_cycle1")
 
     rag = db.select_descriptor_values(descriptors_rfdiffusion.RADIUS_OF_GYRATION.key, design_ids)
-    assert len(rag) == 2
+    assert len(rag.dropna()) == 2
     assert (rag > 0).all()
 
     af2_ipae = db.select_descriptor_values(descriptors_refolding.AF2_PRIMARY_IPAE.key, design_ids)
-    assert len(af2_ipae) == 2
+    assert len(af2_ipae.dropna()) == 2
     assert (af2_ipae < 30).all()
 
     rosetta_ddg = db.select_descriptor_values(descriptors_rfdiffusion.PYROSETTA_DDG.key, design_ids)
-    assert len(rosetta_ddg) == 2
+    assert len(rosetta_ddg.dropna()) == 2
     assert not rosetta_ddg.isna().any()

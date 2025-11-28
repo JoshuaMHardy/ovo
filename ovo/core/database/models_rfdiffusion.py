@@ -5,7 +5,7 @@ from typing import Callable, Optional
 import pandas as pd
 
 from ovo.core.database import descriptors_refolding, descriptors_rfdiffusion
-from ovo.core.database.models import DesignWorkflow, WorkflowParams, WorkflowTypes, Design, Threshold
+from ovo.core.database.models import DesignWorkflow, WorkflowParams, WorkflowTypes, Design, Threshold, Base
 from ovo.core.database.models_refolding import (
     RefoldingSupportedDesignWorkflow,
 )
@@ -292,11 +292,12 @@ class RFdiffusionWorkflow(DesignWorkflow, RefoldingSupportedDesignWorkflow):
 
         return prepare_rfdiffusion_workflow_params(self, workdir=workdir)
 
-    def process_results(self, job: "DesignJob", callback: Callable = None):
-        """Process results of a successful workflow - download files from workdir, save DesignJob, Pool and Designs"""
+    def process_results(self, job: "DesignJob", callback: Callable = None) -> list[Base]:
+        """Process results of a successful workflow - download files from workdir,
+        create Design and DescriptorValue objects"""
         from ovo.core.logic.design_logic_rfdiffusion import process_workflow_results
 
-        process_workflow_results(job=job, callback=callback)
+        return process_workflow_results(job=job, callback=callback)
 
     @classmethod
     def get_download_fields(cls):
