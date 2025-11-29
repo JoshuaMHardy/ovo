@@ -3,16 +3,12 @@ import os
 from rich.prompt import Prompt, Confirm
 from ovo.cli.common import console, OVOCliError, download_files, init_nextflow
 from ovo.core.configuration import (
-    OVOConfig,
     ConfigProps,
     DEFAULT_OVO_HOME,
     get_source_command,
     get_shell_config_path,
-    save_global_home_dir,
-    global_config_flag,
     save_default_config,
 )
-import subprocess
 import shutil
 
 app = typer.Typer(pretty_exceptions_enable=False, help="OVO initialization commands")
@@ -192,9 +188,9 @@ All paths can be customized later in the [bold]config.yml[/bold] file.
         console.print("\nYou will need to set the OVO_HOME environment variable to use this home directory.")
         export_command = f'export OVO_HOME="{home_dir}"'
 
-        if (shell_config_path := get_shell_config_path()) and Confirm.ask(
+        if (shell_config_path := get_shell_config_path()) and (yes or Confirm.ask(
             f"\nAdd the OVO_HOME dir to {shell_config_path}?"
-        ):
+        )):
             with open(shell_config_path, "a") as f:
                 f.write(f"\n{export_command}")
             console.print(f"\n✔ Added to {shell_config_path}. Restart your terminal or run:")
