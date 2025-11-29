@@ -32,6 +32,12 @@ sqlite:
     DB_PATH=$({{RUN}} python -c "from ovo import config; print(config.db.url.removeprefix('sqlite://'))")
     sqlite3 "$DB_PATH"
 
+build:
+    rm -rf ./dist
+    # Always use uv for building
+    uv build
+    ls -lh dist
+
 test: unit-test
 
 # Run unit tests including Streamlit unit tests

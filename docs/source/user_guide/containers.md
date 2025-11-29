@@ -15,6 +15,7 @@ schedulers:
   local:
     name: Local with Conda   # <-- Choose a descriptive name
     type: NextflowScheduler
+    workdir: ./workdir
     submission_args:
       profile: conda,cpu_env # <--- Change 'conda' to 'singularity', 'apptainer', 'docker', ...
       config: ./nextflow_local.config # <--- Customize advanced Nextflow config if needed
@@ -27,13 +28,34 @@ OVO containers are defined in the [ovo-containers GitHub repository](https://git
 Conda environments are defined directly in the [envs](https://github.com/MSDLLCpapers/ovo/tree/develop/ovo/envs) directory of the OVO repository 
 or plugin repositories like [OVO promb](https://github.com/MSDLLCpapers/ovo-promb/tree/main/ovo_promb/envs) and are automatically created by Nextflow during workflow execution.
 
-For **Singularity** and **Apptainer**, OVO will automatically download the required containers 
+### Singularity and Apptainer (recommended)
+
+For Singularity and Apptainer, OVO will automatically download the required containers 
 during workflow execution from [http://ovo.dichlab.org/public/singularity](http://ovo.dichlab.org/public/singularity).
-The downloaded containers will be stored in `$OVO_HOME/workdir/work/singularity/`. If you wish to build the containers yourself, you will need to first build the Docker images using instructions below.
+The downloaded containers will be stored in `$OVO_HOME/workdir/work/singularity/`. 
+If you wish to build the containers yourself, you will need to first build the Docker images using instructions below.
 save them into a Docker archive (`docker save -o image.tar image`),
 and then convert them to Singularity/Apptainer format (`singularity build image-name docker-archive://image.tar`).
 
-For **Docker**, please build all required images using the provided docker-compose file in the ovo-containers repository:
+Example configuration for Singularity:
+
+```yaml
+schedulers:
+  local:
+    name: Local with Singularity
+    type: NextflowScheduler
+    workdir: ./workdir
+    submission_args:
+      profile: singularity,cpu_env
+      config: ./nextflow_local.config
+```
+
+See [Scheduler documentation](schedulers.md) for more details on configuring OVO to use Singularity or Apptainer
+on HPC clusters with grid schedulers like SLURM or PBS Pro.
+
+## Docker
+
+For Docker, please build all required images using the provided docker-compose file in the ovo-containers repository:
 
 ```bash
 # Clone the ovo-containers repository

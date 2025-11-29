@@ -8,6 +8,8 @@ Make sure you have the following software installed:
 - **Java** (OpenJDK 21-24 recommended, at least 17)
 - Environment manager of your choice: **Conda**, **Singularity**, **Apptainer**, **Docker** or others supported by [Nextflow](https://nextflow.io/docs/latest/container.html)
 
+Running OVO workflows through Nextflow requires a **Unix-like operating system**: Linux, macOS, or Windows Subsystem for Linux.
+
 <details>
     <summary>Check Python version</summary>
 

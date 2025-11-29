@@ -7,7 +7,10 @@ high-performance, infrastructure-agnostic platform for *de novo* protein design.
 OVO features Nextflow-based workflow orchestration, a storage layer, and both command-line and web interfaces 
 that democratize scaffold design, binder design and diversification, and validation workflows.
 
-TODO link to pre-print.
+> Ovo, an Open-Source Ecosystem for De Novo Protein Design, 
+> David Prihoda, Marco Ancona, Tereza Calounova, Adam Kral, Lukas Polak, 
+> Hugo Hrban, Nicholas J. Dickens, Danny Asher Bitton 
+> bioRxiv 2025.11.27.691041; doi: https://doi.org/10.1101/2025.11.27.691041
 
 ## 🐣 Getting started
 

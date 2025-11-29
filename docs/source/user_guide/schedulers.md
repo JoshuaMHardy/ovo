@@ -35,6 +35,8 @@ assigning unique `Design` IDs and creating Design and `DescriptorValue` entries 
 
 ## Configuring OVO for SLURM scheduler
 
+This example uses SLURM with Singularity, see [Containers](containers.md) for details on different containerization options.
+
 To use SLURM executor, modify the OVO configuration file, typically located at `~/ovo/config.yml`:
 
 ```yaml
@@ -44,16 +46,18 @@ schedulers:
   slurm: # <- your new scheduler key, can be any name you choose, set as default_scheduler above
     name: SLURM Singularity GPU # <-- user-friendly name
     type: NextflowScheduler
+    workdir: ./workdir # <-- where to store temporary files, potentially in a tmp dir like /scratch/ovo/workdir
     submission_args:
       profile: singularity # <-- or apptainer, docker, conda, etc.
       config: ./nextflow_slurm_singularity.config
-    workdir: /scratch/ovo/workdir # <-- where to store temporary files (workflow task results and logs)
   local: # <--- default local scheduler, adjust based on your settings
-    name: Local with Conda
+    name: Local with Singularity
     type: NextflowScheduler
+    workdir: ./workdir # <-- where to store temporary files, potentially in a tmp dir like /scratch/ovo/workdir
     submission_args:
-      profile: conda,cpu_env
+      profile: singularity,cpu_env
       config: ./nextflow_local.config
+
 ```
 
 And create the referenced `nextflow_slurm_singularity.config` nextflow config file:
@@ -106,6 +110,8 @@ Please refer to the [Nextflow documentation](https://nextflow.io/docs/latest/exe
 
 ## Configuring OVO for PBS Pro scheduler
 
+This example uses PBS Pro with Singularity, see [Containers](containers.md) for details on different containerization options.
+
 To use PBS executor, modify the OVO configuration file, typically located at `~/ovo/config.yml`:
 
 ```yaml
@@ -115,15 +121,16 @@ schedulers:
   pbs: # <- your new scheduler key, can be any name you choose, set as default_scheduler above
     name: PBS Singularity GPU # <-- user-friendly name
     type: NextflowScheduler
+    workdir: ./workdir # <-- where to store temporary files, potentially in a tmp dir like /scratch/ovo/workdir
     submission_args:
       profile: singularity # <-- or apptainer, docker, conda, etc.
       config: ./nextflow_pbs_singularity.config
-    workdir: /scratch/ovo/workdir # <-- where to store temporary files (workflow task results and logs)
   local: # <--- default local scheduler, adjust based on your settings
-    name: Local with Conda
+    name: Local with Singularity
     type: NextflowScheduler
+    workdir: ./workdir # <-- where to store temporary files, potentially in a tmp dir like /scratch/ovo/workdir
     submission_args:
-      profile: conda,cpu_env
+      profile: singularity,cpu_env
       config: ./nextflow_local.config
 ```
 
