@@ -18,6 +18,10 @@ To get started with OVO, please refer to the **[User Guide](https://ovo.dichlab.
 
 To preview the OVO web app (without the ability to submit jobs), see the [OVO Demo Server](https://ovo.dichlab.org/demo).
 
+## ▶️ Demo video
+
+https://github.com/user-attachments/assets/7b339fa6-c6de-467d-90d0-5cd15f83c498
+
 ## 🧬 Methods & Acknowledgments
 
 We gratefully acknowledge the authors and developers of the following methods and tools available from OVO:
