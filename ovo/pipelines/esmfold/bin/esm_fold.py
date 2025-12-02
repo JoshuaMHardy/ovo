@@ -44,13 +44,26 @@ def get_sequence_from_pdb_file(file_path: str, chain: str = "A") -> InputSequenc
 
 def get_sequence_from_fasta_file(file_path: str) -> InputSequence:
     """
-    Get the sequence from a FASTA file.
+    Get the first sequence from a FASTA file.
     """
-    seq_id = re.sub(r"\.(fasta|fa)$", "", os.path.basename(file_path))
+    seq_id = os.path.splitext(os.path.basename(file_path))[0]
     with open(file_path) as f:
         for record in SeqIO.parse(f, "fasta"):
             return InputSequence(id=seq_id, sequence=str(record.seq))
     raise ValueError(f"No valid sequences found in {file_path}")
+
+
+def get_sequences_from_fasta_file(file_path: str) -> list[InputSequence]:
+    """
+    Get all sequences from a FASTA file.
+    """
+    input_sequences = []
+    with open(file_path) as f:
+        for record in SeqIO.parse(f, "fasta"):
+            input_sequences.append(InputSequence(id=record.id, sequence=str(record.seq)))
+    if len(input_sequences) == 0:
+        raise ValueError(f"No valid sequences found in {file_path}")
+    return input_sequences
 
 
 def setup_logger(output_dir: str) -> logging.Logger:
@@ -232,7 +245,7 @@ def main(args):
     elif args.input_path.endswith((".pdb",)):
         input_sequences = [get_sequence_from_pdb_file(args.input_path, args.chain)]
     elif args.input_path.endswith((".fasta", ".fa")):
-        input_sequences = [get_sequence_from_fasta_file(args.input_path)]
+        input_sequences = get_sequences_from_fasta_file(args.input_path)
     else:
         raise ValueError(
             "Input must be a directory with PDB files, a directory with FASTA files, a PDB file, or a FASTA file"
