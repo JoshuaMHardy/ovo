@@ -112,12 +112,18 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
     )
     trb_dict = storage.read_file_pickle(paths[descriptors_rfdiffusion.RFDIFFUSION_TRB_PATH.key])
     input_pdb_str = storage.read_file_str(workflow.get_input_pdb_path(design.contig_index))
-    input_contigs_parsed = parser.parse_contigs_str(trb_dict["sampled_mask"][0])
-    output_contigs_parsed = parser.parse_contigs_trb(trb_dict)
+    input_segments = [segment for contig in trb_dict["sampled_mask"] for segment in parser.parse_contigs_str(contig)]
+    output_segments = parser.parse_contigs_trb(trb_dict)
+
     input_mapping = [
-        (contig.input_res_chain, list(range(contig.input_res_start, contig.input_res_end + 1)))
-        for contig in input_contigs_parsed
-        if contig.type == "fixed"
+        (segment.input_res_chain, list(range(segment.input_res_start, segment.input_res_end + 1)))
+        for segment in input_segments
+        if segment.type == "fixed"
+    ]
+    output_mapping = [
+        (segment.out_res_chain, list(range(segment.out_res_start, segment.out_res_end + 1)))
+        for segment in output_segments
+        if segment.type == "fixed"
     ]
 
     left, middle, right = st.columns(3, gap="medium")
@@ -128,7 +134,7 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
         molstar_custom_component(
             structures=[
                 StructureVisualization(
-                    pdb=input_pdb_str, contigs=input_contigs_parsed, representation_type="cartoon+ball-and-stick"
+                    pdb=input_pdb_str, contigs=input_segments, representation_type="cartoon+ball-and-stick"
                 ),
             ],
             key="full_input",
@@ -144,7 +150,7 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
             structures=[
                 StructureVisualization(
                     pdb=storage.read_file_str(paths[backbone_design_descriptor.key]),
-                    contigs=output_contigs_parsed,
+                    contigs=output_segments,
                 )
             ],
             key="rfdiff_contig_segments",
@@ -165,7 +171,7 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
             structures=[
                 StructureVisualization(
                     pdb=storage.read_file_str(paths[sequence_design_descriptor.key]),
-                    contigs=output_contigs_parsed,
+                    contigs=output_segments,
                     representation_type="cartoon+ball-and-stick",
                 )
             ],
@@ -214,10 +220,10 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
     with middle:
         st.write(f"##### Input motif aligned to prediction")
 
-        input_motif_pdb = filter_pdb_str(input_pdb_str, [s.value for s in input_contigs_parsed if s.type == "fixed"])
+        input_motif_pdb = filter_pdb_str(input_pdb_str, [s.value for s in input_segments if s.type == "fixed"])
         structures = [
             StructureVisualization(
-                pdb=input_motif_pdb, contigs=input_contigs_parsed, representation_type="cartoon+ball-and-stick"
+                pdb=input_motif_pdb, contigs=input_segments, representation_type="cartoon+ball-and-stick"
             )
         ]
 
@@ -225,16 +231,12 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
             pdb_strs=[input_motif_pdb, prediction_pdb],
             chain_residue_mappings=[
                 input_mapping,
-                [
-                    (contig.out_res_chain, list(range(contig.out_res_start, contig.out_res_end + 1)))
-                    for contig in output_contigs_parsed
-                    if contig.type == "fixed"
-                ],
+                output_mapping,
             ],
             all_atom=True,
         )
         num_fixed = sum(
-            contig.out_res_end - contig.out_res_start + 1 for contig in output_contigs_parsed if contig.type == "fixed"
+            segment.out_res_end - segment.out_res_start + 1 for segment in output_segments if segment.type == "fixed"
         )
 
         structures.append(
@@ -280,7 +282,7 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
 
         molstar_custom_component(
             structures=[
-                StructureVisualization(pdb=structures[0], contigs=output_contigs_parsed),
+                StructureVisualization(pdb=structures[0], contigs=output_segments),
                 StructureVisualization(
                     pdb=aligned_str,
                     representation_type="cartoon",

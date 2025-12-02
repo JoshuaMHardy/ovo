@@ -40,8 +40,8 @@ physicochemical properties, sequence composition, and fitness from protein langu
 
     st.markdown("### Introduction video")
 
-    st.write("TODO")
-    # st.video("https://www.youtube.com/watch?v=...")
+    with st.columns([0.9, 0.1])[0]:
+        st.video("https://github.com/user-attachments/assets/7b339fa6-c6de-467d-90d0-5cd15f83c498")
 
 
 if config.templates.welcome_appendix:
@@ -49,5 +49,5 @@ if config.templates.welcome_appendix:
 else:
     st.markdown("""
     ---
-    Request more features in **TODO github issues link**!            
+    Report bugs and feature requests at [github.com/MSDLLCpapers/ovo/issues](https://github.com/MSDLLCpapers/ovo/issues)            
     """)
