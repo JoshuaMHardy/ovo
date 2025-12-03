@@ -36,13 +36,12 @@ The 🐣 *Designs* page focuses further on the *accepted designs*. The 🔵 *Exp
 design descriptors and visualizing their structures. The 🔎 *ProteinQC* view provides additional computational evaluation
 informing you about the quality of the designs using additional descriptors focused on 
 physicochemical properties, sequence composition, and fitness from protein language models.
+
+### Learning resources
+
+- [User Guide](https://ovo.dichlab.org/docs/user_guide/)
+- [Ovo overview video](https://github.com/user-attachments/assets/7b339fa6-c6de-467d-90d0-5cd15f83c498)
 """)
-
-    st.markdown("### Introduction video")
-
-    with st.columns([0.9, 0.1])[0]:
-        st.video("https://github.com/user-attachments/assets/7b339fa6-c6de-467d-90d0-5cd15f83c498")
-
 
 if config.templates.welcome_appendix:
     st.markdown(Path(config.templates.welcome_appendix).read_text(), unsafe_allow_html=True)
