@@ -22,6 +22,17 @@ import importlib.metadata
 __version__ = importlib.metadata.version("ovo-app")
 
 try:
+    if sys.platform == "win32":
+        console.print(
+            Panel.fit(
+                "[bold red]⚠️  WARNING: Windows Detected ⚠️[/bold red]\n\n"
+                "[yellow]OVO workflows use Nextflow which is not supported on Windows.[/yellow]\n"
+                "[yellow]Please use Linux or macOS, or run OVO in WSL2 (Windows Subsystem for Linux) to enable submitting workflows.[/yellow]",
+                border_style="red",
+                title="[bold red]Platform Warning[/bold red]",
+            )
+        )
+
     config = load_config(home_dir=GLOBAL_OVO_HOME or os.getenv("OVO_HOME") or DEFAULT_OVO_HOME)
 
     db = SqlDBEngine(db_url=config.db.url, verbose=config.db.verbose, read_only=config.props.read_only)
