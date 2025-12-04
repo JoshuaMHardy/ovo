@@ -1,6 +1,7 @@
 import json
 import signal
 import subprocess
+import shlex
 from pathlib import Path
 from typing import Any
 from uuid import uuid1
@@ -52,7 +53,7 @@ class NextflowScheduler(Scheduler, SimpleQueueMixin):
         os.makedirs(self.workdir, exist_ok=True)
         os.makedirs(execdir, exist_ok=False)  # fail in rare case that uuid1 is not unique
 
-        print(f"Submitting workflow: {' '.join(command)}")
+        print(f"Submitting workflow: {shlex.join(command)}")
         print(f"Execution directory: {execdir}")
 
         if self.has_queue():
