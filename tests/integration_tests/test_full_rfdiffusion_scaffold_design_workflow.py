@@ -86,7 +86,7 @@ def test_scaffold_end_to_end_logic(project_data):
     )
     refolding.validate()
     descriptor_job = descriptor_logic.submit_descriptor_workflow(
-        workflow=refolding, scheduler_key=TEST_SCHEDULER_KEY, round_id=project_round.id
+        workflow=refolding, scheduler_key=TEST_SCHEDULER_KEY, project_id=project.id
     )
     descriptor_logic.process_results(descriptor_job)
 

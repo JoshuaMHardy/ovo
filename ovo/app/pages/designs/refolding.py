@@ -51,7 +51,6 @@ def refolding_fragment(pool_ids: list[str], design_ids: list[str] | None = None)
         submit_refolding_dialog(pool_ids, design_ids)
 
     refresh_descriptors(
-        round_ids=set(pool.round_id for pool in pools),
         design_ids=design_ids,
         workflow_names=[RefoldingWorkflow.name],
     )
@@ -146,39 +145,29 @@ def submit_refolding_dialog(pool_ids: list[str], design_ids: list[str]):
 
     if submit:
         content.empty()
-        st.write("Preparing workflow inputs...")
         if not tests:
             st.warning("Please select at least one test.")
             return
 
-        # TODO this is just because of our DB model - DescriptorJob being associated to a single Round
-        #  so we need to create a separate Workflow and DescriptorJob for each round
-        round_ids_by_pool = db.select_dict(Pool, "id", "round_id", id__in=pool_ids)
-        pool_ids_by_design = db.select_dict(Design, "id", "pool_id", id__in=design_ids)
-        for round_id in sorted(set(round_ids_by_pool.values())):
-            round_pool_ids = [pool_id for pool_id, r in round_ids_by_pool.items() if r == round_id]
-            round_design_ids = [
-                design_id for design_id in design_ids if pool_ids_by_design[design_id] in round_pool_ids
-            ]
+        # collect designs by their native PDB path (each workflow job only supports a single native structure)
+        st.write("Preparing workflow inputs...")
+        groups = defaultdict(list)
+        for pool in pools:
+            index_by_id = db.select_dict(Design, "id", "contig_index", id__in=design_ids, pool_id=pool.id)
+            if not pool.design_job_id:
+                groups[None] += list(index_by_id.keys())
+                continue
+            design_workflow = design_workflows_by_pool_id[pool.id]
+            ids_by_index = defaultdict(list)
+            for design_id, contig_index in index_by_id.items():
+                ids_by_index[contig_index].append(design_id)
+            for contig_index, ids in ids_by_index.items():
+                native_pdb_path = design_workflow.get_refolding_native_pdb_path(contig_index)
+                groups[native_pdb_path] += ids
 
-            # collect designs by their native PDB path (each workflow job only supports a single native structure)
-            groups = defaultdict(list)
-            for pool in pools:
-                if not pool.design_job_id:
-                    groups[None] += round_design_ids
-                    continue
-                design_workflow = design_workflows_by_pool_id[pool.id]
-                index_by_id = db.select_dict(Design, "id", "contig_index", id__in=round_design_ids)
-                ids_by_index = defaultdict(list)
-                for design_id, contig_index in index_by_id.items():
-                    ids_by_index[contig_index].append(design_id)
-                for contig_index, ids in ids_by_index.items():
-                    native_pdb_path = design_workflow.get_refolding_native_pdb_path(contig_index)
-                    groups[native_pdb_path] += ids
-
-            for native_pdb_path, group_design_ids in groups.items():
-                workflow = RefoldingWorkflow(
-                    design_type=design_type, tests=tests, design_ids=group_design_ids, native_pdb_path=native_pdb_path
-                )
-                submit_descriptor_workflow(workflow, scheduler_key, round_id)
+        for native_pdb_path, group_design_ids in groups.items():
+            workflow = RefoldingWorkflow(
+                design_type=design_type, tests=tests, design_ids=group_design_ids, native_pdb_path=native_pdb_path
+            )
+            submit_descriptor_workflow(workflow, scheduler_key, st.session_state.project.id)
         st.rerun()

@@ -21,7 +21,6 @@ from ovo.core.database import descriptors_rfdiffusion, descriptors_refolding
 from ovo.core.database.models import Pool, Round, DesignJob, DesignSpec, DescriptorValue, StructureFileDescriptor, Base
 from ovo.core.logic.descriptor_logic import save_descriptor_job_for_design_job, read_descriptor_file_values
 from ovo.core.logic.design_logic import set_designs_accepted
-from ovo.core.scheduler.base_scheduler import Scheduler
 
 
 def submit_rfdiffusion_preview(
@@ -135,7 +134,7 @@ def process_workflow_results(job: DesignJob, callback: Callable = None) -> list[
 
     # Create descriptor job on the fly
     descriptor_job = save_descriptor_job_for_design_job(
-        design_job=job, round_id=project_round.id, chains=["A"], design_ids=list(design_id_mapping.keys())
+        design_job=job, project_id=project_round.project_id, chains=["A"], design_ids=list(design_id_mapping.keys())
     )
     for value in descriptor_values:
         value.descriptor_job_id = descriptor_job.id

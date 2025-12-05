@@ -2,7 +2,7 @@ import os
 from typing import Type, Sequence, Any
 import pandas as pd
 
-from sqlalchemy import create_engine, or_, func, case, text, distinct
+from sqlalchemy import create_engine, or_, func, case, text, distinct, inspect
 from sqlalchemy.orm import Session, with_polymorphic
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -30,8 +30,29 @@ class SqlDBEngine(CacheClearingEngine):
             if not os.path.exists(db_path):
                 os.makedirs(os.path.dirname(db_path), exist_ok=True)
         # Create the table(s)
-        # TODO what if schema has changed?
         Base.metadata.create_all(self._engine)
+        self.automigrate()
+
+    def automigrate(self):
+        with self._create_session() as session:
+            inspector = inspect(self._engine)
+            descriptor_job_columns = [c["name"] for c in inspector.get_columns("descriptor_job")]
+            if "project_id" not in descriptor_job_columns and "round_id" in descriptor_job_columns:
+                print("Applying automigration: adding project_id to descriptor_job", file=sys.stderr)
+                session.execute(text("ALTER TABLE descriptor_job ADD COLUMN project_id VARCHAR"))
+                # create index on project_id
+                session.execute(text("CREATE INDEX ix_descriptor_job_project_id ON descriptor_job (project_id)"))
+                # fill existing rows with project_id based on descriptor_job.round_id = round.id -> round.project_id
+                session.execute(
+                    text(
+                        "UPDATE descriptor_job SET project_id = "
+                        "(SELECT project_id FROM round WHERE round.id = descriptor_job.round_id)"
+                    )
+                )
+                session.commit()
+                session.execute(text("DROP INDEX IF EXISTS ix_descriptor_job_round_id"))
+                session.execute(text("ALTER TABLE descriptor_job DROP COLUMN round_id"))
+                session.commit()
 
     def _create_session(self) -> Session:
         return Session(bind=self._engine, expire_on_commit=False)
@@ -142,6 +163,9 @@ class SqlDBEngine(CacheClearingEngine):
             elif k.endswith("__in"):
                 descriptor_key = k[:-4]  # Remove the '__in' suffix
                 filters.append(getattr(model, descriptor_key).in_(v))
+            elif k.endswith("__ne"):
+                descriptor_key = k[:-4]
+                filters.append(getattr(model, descriptor_key) != v)
             else:
                 filters.append(getattr(model, k) == v)
         return filters

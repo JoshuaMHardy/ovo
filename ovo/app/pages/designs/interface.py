@@ -86,7 +86,6 @@ def interface_fragment(pool_ids: List[str], design_ids: List[str] | None = None)
 
     # Refresh descriptors
     refresh_descriptors(
-        round_ids=set(pool.round_id for pool in pools),
         design_ids=design_ids,
     )
 

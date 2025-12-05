@@ -6,27 +6,34 @@ from ovo.core.database.models import DescriptorJob
 from ovo.core.logic.descriptor_logic import update_and_process_descriptors
 
 
-def refresh_descriptors(
-    round_ids: list[str] | set[str], design_ids: list[str] | set[str], workflow_names: list[str] = None
-):
+def refresh_descriptors(design_ids: list[str] | set[str], workflow_names: list[str] = None):
     """Update and process all descriptor jobs results and display a Refresh button and log output if any errors occurred."""
 
     with st.spinner("Updating descriptor job status..."):
-        jobs = db.select(DescriptorJob, round_id__in=round_ids, order_by="-created_date_utc")
+        pending_or_failed_jobs = db.select(
+            DescriptorJob,
+            project_id=st.session_state.project.id,
+            _or=(dict(job_result=None), dict(job_result=False)),
+            order_by="-created_date_utc",
+        )
 
         # Only consider jobs with a Workflow that links to one of the design IDs
-        jobs = [j for j in jobs if j.workflow and set(design_ids).intersection(j.workflow.design_ids)]
+        pending_or_failed_jobs = [
+            j for j in pending_or_failed_jobs if j.workflow and set(design_ids).intersection(j.workflow.design_ids)
+        ]
 
         # Only consider certain workflow classes
         if workflow_names:
             if isinstance(workflow_names, str):
                 workflow_names = [workflow_names]
-            jobs = [j for j in jobs if j.workflow and j.workflow.name in workflow_names]
+            pending_or_failed_jobs = [
+                j for j in pending_or_failed_jobs if j.workflow and j.workflow.name in workflow_names
+            ]
 
-        pending_jobs = [j for j in jobs if j.job_result is None]
+        pending_jobs = [j for j in pending_or_failed_jobs if j.job_result is None]
         update_and_process_descriptors(descriptor_jobs=pending_jobs, error_callback=st.error)
 
-        failed_jobs = [j for j in jobs if j.job_result is False]
+        failed_jobs = [j for j in pending_or_failed_jobs if j.job_result is False]
 
         if num_pending_jobs := sum(j.job_result is None for j in pending_jobs):
             st.info(

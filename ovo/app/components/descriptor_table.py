@@ -56,6 +56,9 @@ def make_bg_color_func(descriptor, min_val, max_val):
 
 @st.fragment()
 def descriptor_table(design_ids: List[str], descriptors_df: pd.DataFrame, descriptors: List[Descriptor]):
+    if not design_ids or descriptors_df.empty:
+        st.warning("No results yet")
+        return
     # Select only columns for the selected descriptors
     assert descriptors_df.columns.nlevels == 2, "Expected nested=True table with 2 levels (tool name, descriptor name)"
     assert len(set(d.key for d in descriptors)) == len(descriptors), (
@@ -63,9 +66,6 @@ def descriptor_table(design_ids: List[str], descriptors_df: pd.DataFrame, descri
     )
     sequence_cols = [col for col in descriptors_df.columns if col[0] == "Sequence"]
     selected_df = descriptors_df[sequence_cols + [(descriptor.tool, descriptor.name) for descriptor in descriptors]]
-    if not design_ids:
-        st.warning("No designs found")
-        return
     styles = {}
     column_config = {}
 

@@ -121,7 +121,6 @@ def design_job_detail(pool_ids):
     all_design_ids = sorted(db.select_unique_values(Design, "id", pool_id__in=pool_ids))
 
     refresh_descriptors(
-        round_ids=set(pool.round_id for pool in pools),
         design_ids=all_design_ids,
     )
 

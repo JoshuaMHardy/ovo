@@ -20,7 +20,7 @@ def test_full_proteinqc(project_data):
     )
     proteinqc.validate()
     descriptor_job = descriptor_logic.submit_descriptor_workflow(
-        workflow=proteinqc, scheduler_key=TEST_SCHEDULER_KEY, round_id=project_round.id
+        workflow=proteinqc, scheduler_key=TEST_SCHEDULER_KEY, project_id=project.id
     )
     descriptor_logic.process_results(descriptor_job)
     values = descriptor_logic.get_wide_descriptor_table(design_ids=design_ids)

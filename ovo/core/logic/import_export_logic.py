@@ -31,7 +31,7 @@ IMPORT_EXPORT_CONFIGS = [
         "model_class": DesignJob,
         "filter": lambda o: dict(id__in=[p.design_job_id for p in o["pool"] if p.design_job_id is not None]),
     },
-    {"model_class": DescriptorJob, "filter": lambda o: dict(round_id__in=[r.id for r in o["round"]])},
+    {"model_class": DescriptorJob, "filter": lambda o: dict(project_id__in=[p.id for p in o["project"]])},
     {
         "model_class": DescriptorValue,
         "filter": lambda o: dict(descriptor_job_id__in=[j.id for j in o["descriptor_job"]]),

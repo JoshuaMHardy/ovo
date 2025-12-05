@@ -105,7 +105,7 @@ def create_new_pool():
                 design_ids=[design.id for design in designs],
             ),
             scheduler_key="local",
-            round_id=round_id,
+            project_id=project_id,
         )
 
         st.session_state.files = None

@@ -39,7 +39,6 @@ def explorer_fragment(pool_ids: list[str], design_ids: list[str] | None = None):
     st.write("Selected pools: " + " ".join(badges))
 
     refresh_descriptors(
-        round_ids=set(pool.round_id for pool in pools),
         design_ids=design_ids,
     )
 

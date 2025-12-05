@@ -53,7 +53,6 @@ def proteinqc_fragment(pool_ids: list[str], design_ids: list[str] | None = None)
         submit_proteinqc_dialog(pool_ids, design_ids)
 
     refresh_descriptors(
-        round_ids=set(pool.round_id for pool in pools),
         design_ids=design_ids,
         workflow_names=[ProteinQCWorkflow.name],
     )
@@ -123,15 +122,6 @@ def submit_proteinqc_dialog(pool_ids: list[str], design_ids: list[str]):
     if st.button("Submit", key="submit_proteinqc_btn", type="primary"):
         st.write("Submitting job... 🚀")
 
-        # TODO this is just because of our DB model - DescriptorJob being associated to a single Round
-        #  so we need to create a separate Workflow and DescriptorJob for each round
-        round_ids_by_pool = db.select_dict(Pool, "id", "round_id", id__in=pool_ids)
-        pool_ids_by_design = db.select_dict(Design, "id", "pool_id", id__in=design_ids)
-        for round_id in sorted(set(round_ids_by_pool.values())):
-            round_pool_ids = [pool_id for pool_id, r in round_ids_by_pool.items() if r == round_id]
-            round_design_ids = [
-                design_id for design_id in design_ids if pool_ids_by_design[design_id] in round_pool_ids
-            ]
-            workflow = ProteinQCWorkflow(tools=tool_keys, chains=list(chains), design_ids=round_design_ids)
-            submit_descriptor_workflow(workflow, scheduler_key, round_id)
+        workflow = ProteinQCWorkflow(tools=tool_keys, chains=list(chains), design_ids=design_ids)
+        submit_descriptor_workflow(workflow, scheduler_key, st.session_state.project.id)
         st.rerun()

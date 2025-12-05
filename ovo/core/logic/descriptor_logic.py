@@ -104,7 +104,7 @@ def get_wide_descriptor_table(
     return df
 
 
-def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str, round_id: str):
+def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str, project_id: str):
     if config.props.read_only:
         raise RuntimeError("Cannot submit design workflow: OVO server is in read-only mode")
 
@@ -124,7 +124,7 @@ def submit_descriptor_workflow(workflow: DescriptorWorkflow, scheduler_key: str,
     descriptor_job = DescriptorJob(
         id=DescriptorJob.generate_id(),
         author=username,
-        round_id=round_id,
+        project_id=project_id,
         job_id=job_id,
         scheduler_key=scheduler_key,
         workflow=workflow,
@@ -325,14 +325,14 @@ def read_descriptor_file_values(
 
 
 def save_descriptor_job_for_design_job(
-    design_job: DesignJob, round_id: str, chains: list[str], design_ids: list[str]
+    design_job: DesignJob, project_id: str, chains: list[str], design_ids: list[str]
 ) -> DescriptorJob:
     descriptor_job = DescriptorJob(
         id=DescriptorJob.generate_id(),
         scheduler_key=design_job.scheduler_key,
         job_id=design_job.job_id,
         author=design_job.author,
-        round_id=round_id,
+        project_id=project_id,
         job_result=True,
         workflow=DesignDescriptorWorkflow(
             design_job_id=design_job.id,

@@ -633,7 +633,7 @@ class DescriptorJob(Base, MetadataMixin, JobMixin):
     __tablename__ = "descriptor_job"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=None)
-    round_id: Mapped[str] = mapped_column(String, default=None, nullable=False, index=True)
+    project_id: Mapped[str] = mapped_column(String, default=None, nullable=False, index=True)
     processed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     workflow: Mapped[DescriptorWorkflow] = mapped_column(DataclassType(Workflow), default=None, nullable=False)
 

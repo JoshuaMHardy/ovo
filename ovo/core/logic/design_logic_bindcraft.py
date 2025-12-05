@@ -181,7 +181,7 @@ def process_workflow_results(job: DesignJob, callback: Callable = None) -> list[
 
     descriptor_job = save_descriptor_job_for_design_job(
         design_job=job,
-        round_id=project_round.id,
+        project_id=project_round.project_id,
         # TODO currently binder chain is B, this might be changed later to chain A
         chains=["B"],
         design_ids=list(design_id_mapping.keys()),
