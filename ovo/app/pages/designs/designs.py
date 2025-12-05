@@ -67,7 +67,7 @@ view = st.segmented_control("Views", options=list(views), key="design_view")
 if not view:
     if "design_view" in st.query_params:
         del st.query_params["design_view"]
-    st.caption("*Choose a view to see your designs.*")
+    st.write(":material/arrow_upward: *Choose one of the view options to see your designs*")
     st.stop()
 
 st.query_params["design_view"] = view

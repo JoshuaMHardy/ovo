@@ -1,14 +1,16 @@
+import os
 import re
 
 import streamlit as st
 
-from ovo import storage, get_username
+from ovo import storage, get_username, config
 from ovo.core.database.models import Pool, Design
 from ovo.core.logic.descriptor_logic import submit_descriptor_workflow
 from ovo.core.logic.round_logic import get_or_create_project_rounds
 from ovo.core.database.models_proteinqc import ProteinQCWorkflow
 
 from ovo import db
+import zipfile
 
 
 @st.dialog("Upload new pool of designs", width="large")
@@ -25,6 +27,14 @@ def create_new_pool():
             format_func=lambda i: rounds_by_id[i].name,
             key="custom_pool_round_selectbox",
             index=len(round_ids) - 1,
+            width=300,
+        )
+
+        files = st.file_uploader(
+            "PDB files *",
+            accept_multiple_files=True,
+            type=["pdb", "zip"],
+            key="uploader",
         )
 
         name = st.text_input("Pool name *", placeholder="Descriptive name for this collection of designs")
@@ -36,33 +46,28 @@ def create_new_pool():
             "Pool description",
             placeholder="Optional longer description of this pool",
         )
-        if "files" not in st.session_state.keys():
-            st.session_state.files = None
-
-        if st.file_uploader(
-            "PDB files *",
-            accept_multiple_files=True,
-            type=["pdb"],
-            key="uploader",
-        ):
-            st.session_state.files = st.session_state.uploader
 
         with st.columns(2)[0]:
             chains = st.text_input(
                 "Chain(s) to analyze",
                 help="Chain IDs separated by comma (A,B,C), space (A B C) or concatenated (ABC)",
-                value="A",
+                value="",
             )
             chains = chains.replace(" ", "").replace(",", "")
 
-        _, submit_col = st.columns([3, 1])
-        with submit_col:
+        if not files:
+            help = "No files selected"
+        elif not name:
+            help = "Please enter a pool name"
+        elif not chains:
+            help = "Please enter chain IDs to analyze"
+        else:
+            help = None
+        with st.columns([3, 1])[1]:
             submit = st.button(
                 "Upload pool",
-                disabled=not st.session_state.files or not name,
-                help="No files selected"
-                if not st.session_state.files
-                else ("Please enter a pool name" if not name else None),
+                disabled=not files or not name or not chains,
+                help=help,
                 key="submit",
                 type="primary",
                 width="stretch",
@@ -78,33 +83,56 @@ def create_new_pool():
         pool = Pool(id=Pool.generate_id(), author=username, round_id=round_id, name=name, description=description)
 
         # Save the files to storage and create designs
-        st.text("📂 Uploading PDB files...")
+        st.text("Uploading designs...")
+        shared_args = dict(
+            storage=storage,
+            chains=list(chains),
+            project_id=project_id,
+            pool_id=pool.id,
+        )
         designs = []
+        for file in files:
+            if file.name.endswith(".pdb"):
+                designs.append(Design.from_pdb_file(filename=file.name, pdb_str=file.read().decode(), **shared_args))
+            elif file.name.endswith(".zip"):
+                # iterate over files in zip
+                found = False
+                with zipfile.ZipFile(file) as z:
+                    for zip_info in z.infolist():
+                        if zip_info.filename.startswith("__MACOSX/"):
+                            continue
+                        filename = os.path.basename(zip_info.filename)
+                        if filename.startswith("."):
+                            continue
+                        if filename.endswith(".pdb"):
+                            found = True
+                            print("Reading", zip_info.filename)
+                            pdb_str = z.read(zip_info.filename).decode()
+                            designs.append(
+                                Design.from_pdb_file(
+                                    filename=filename,
+                                    pdb_str=pdb_str,
+                                    **shared_args,
+                                )
+                            )
+                if not found:
+                    raise ValueError(f"No PDB files found in zip archive '{file.name}'")
 
-        for file in st.session_state.files:
-            designs.append(
-                Design.from_pdb_file(
-                    storage=storage,
-                    filename=file.name,
-                    pdb_str=file.read().decode(),
-                    chains=list(chains),
-                    project_id=project_id,
-                    pool_id=pool.id,
-                )
-            )
+        if len(designs) > 1:
+            st.text(f"Saving {len(designs):,} designs to DB...")
 
         # Save designs to db because we load them from db when submitting the proteinqc job
         db.save_all(designs + [pool])
 
         # Trigger sequence composition computation with local conda scheduler
-        st.text("⏳ Submitting descriptor job...")
+        st.text("Submitting descriptor job...")
         submit_descriptor_workflow(
             workflow=ProteinQCWorkflow(
                 tools=["seq_composition"],
                 chains=list(chains),
                 design_ids=[design.id for design in designs],
             ),
-            scheduler_key="local",
+            scheduler_key=config.local_scheduler,
             project_id=project_id,
         )
 

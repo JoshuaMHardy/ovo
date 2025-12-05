@@ -343,6 +343,7 @@ class Workflow:
 
     @abstractmethod
     def get_pipeline_name(self) -> str:
+        """Get name (for example ovo.rfdiffusion-end-to-end) or github URL of pipeline to be submitted for this workflow"""
         raise NotImplementedError()
 
     @abstractmethod

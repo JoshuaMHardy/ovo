@@ -24,6 +24,10 @@ class JobNotFound(Exception):
 
 
 class Scheduler(ABC):
+    # special case values for imported jobs
+    IMPORTED_SCHEDULER_KEY: str = "imported"
+    IMPORTED_JOB_ID: str = "imported"
+
     def __init__(
         self, name: str, workdir: str, reference_files_dir: str, allow_submit: bool = True, submission_args: dict = None
     ):
