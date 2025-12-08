@@ -4,7 +4,7 @@
 
 Make sure you have the following software installed:
 
-- **Python** (Python 3.13 recommended, at least 3.9)
+- **Python** (Python 3.13 recommended, at least 3.10)
 - **Java** (OpenJDK 21-24 recommended, at least 17)
 - Environment manager of your choice: **Conda**, **Singularity**, **Apptainer**, **Docker** or others supported by [Nextflow](https://nextflow.io/docs/latest/container.html)
 

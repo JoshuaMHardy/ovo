@@ -7,7 +7,7 @@ name = "ovo-app"
 version = "1.0.0-alpha.3"
 description = "OVO: an open-source ecosystem for de novo protein design"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "David Prihoda", email = "david.prihoda@msd.com"},
     {name = "Marco Ancona", email = "marco.ancona@msd.com"},
@@ -17,7 +17,7 @@ authors = [
 dependencies = [
     "numpy",
     "pandas>=2.2.3",
-    "streamlit>=1.50.0",
+    "streamlit>=1.52",
     "authlib",
     "boto3",
     "mypy-boto3",
