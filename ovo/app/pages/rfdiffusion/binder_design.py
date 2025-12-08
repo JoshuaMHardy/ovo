@@ -26,6 +26,7 @@ from ovo.core.database.models_rfdiffusion import (
 )
 from ovo.core.logic.design_logic_rfdiffusion import submit_rfdiffusion_preview
 from ovo.core.utils.formatting import get_hashed_path_for_bytes
+from ovo.core.utils.pdb import check_rfdiffusion_input
 from ovo.core.utils.residue_selection import from_contig_to_residues
 from ovo.core.utils.residue_selection import get_chains_and_contigs
 import streamlit as st
@@ -254,6 +255,16 @@ def trim_step():
 
     # Check if inputs are set
     if workflow.start_res_trimmed_chain is None or workflow.end_res_trimmed_chain is None:
+        return
+
+    # Make sure that structure does not contain chain breaks without a gap in residue
+    # numbering (required in refolding step)
+    try:
+        check_rfdiffusion_input(
+            pdb_input_string, workflow.target_chain, workflow.start_res_trimmed_chain, workflow.end_res_trimmed_chain
+        )
+    except ValueError as e:
+        st.error(str(e))
         return
 
     # Visualize trimmed structure
