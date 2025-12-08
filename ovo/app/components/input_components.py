@@ -6,7 +6,7 @@ import streamlit as st
 from ovo.app.components.molstar_custom_component import molstar_custom_component, StructureVisualization
 from ovo.app.components.molstar_custom_component.dataclasses import ContigSegment
 from ovo.core.database import WorkflowTypes, Workflow
-from ovo.core.utils.residue_selection import parse_selections
+from ovo.core.utils.residue_selection import parse_selections, from_segments_to_hotspots
 from ovo.core.utils.formatting import safe_filename
 from ovo.core.utils.pdb import get_pdb, filter_pdb_str
 
@@ -14,12 +14,12 @@ from ovo import storage
 from ovo.core.utils.pdb import add_glycan_to_pdb
 
 
-def initialize_workflow(page_key: str, workflow_name: str, include_subclasses=False) -> Workflow:
+def initialize_workflow(page_key: str, workflow_name: str, include_subclasses: bool = False) -> Workflow:
     """Initialize a workflow in the session state based on dropdown with available workflow variants (subclasses).
 
     :param page_key: Key identifying the workflow page, used as key in session_state.workflows
     :param workflow_name: Base name of the workflow (e.g. "rfdiffusion-end-to-end")
-
+    :param include_subclasses: Whether to let user choose from subclasses of the base workflow as variants
     """
     variant_names = WorkflowTypes.get_subclass_names(workflow_name) if include_subclasses else [workflow_name]
     if len(variant_names) > 1:
@@ -47,8 +47,14 @@ def initialize_workflow(page_key: str, workflow_name: str, include_subclasses=Fa
 
 def pdb_input_component(old_pdb_code: str | None) -> tuple[str, bytes] | None:
     st.write("Enter PDB code, UniProt ID or upload your own structure file")
-    with st.columns(2)[0]:
-        new_pdb_code = st.text_input("PDB code or UniProt ID", value=old_pdb_code, key="input_pdb_code")
+    with st.container(horizontal=True, vertical_alignment="bottom"):
+        new_pdb_code = st.text_input(
+            "Download by ID",
+            placeholder="Input PDB code or UniProt ID...",
+            value=old_pdb_code,
+            key="input_pdb_code",
+            width=270,
+        )
         st.button("Confirm")
 
     uploaded_file = st.file_uploader("...or upload a PDB file", type=["pdb", "pdb1"], key="input_pdb_file")
@@ -72,9 +78,21 @@ def sequence_selection_fragment(
     input_name: str,
     color="chain-id",
     representation_type="cartoon+ball-and-stick",
+    write_segments: bool = True,
     fixed_segments: list[ContigSegment] | None = None,
     **selection_kwargs,
 ):
+    """Fragment to display input structure and allow residue selection via molstar component.
+
+    :param page_key: Key identifying the workflow page, typically __file__
+    :param input_name: Name of the input structure, used for download filename
+    :param color: Initial color scheme for molstar component
+    :param representation_type: Initial representation type for molstar component
+    :param write_segments: Whether to write selected segments (True) or individual residues (False)
+    :param fixed_segments: If provided, only these segments will be shown in the structure (others hidden)
+    :param selection_kwargs: Additional kwargs passed to workflow.get/set_selected_segments methods
+    """
+
     workflow = st.session_state.workflows[page_key]
 
     if page_key not in st.session_state.selection_history:
@@ -85,25 +103,11 @@ def sequence_selection_fragment(
 
     selection_history = st.session_state.selection_history[page_key][input_name]
 
-    st.write(
-        "Click residues in sequence or structure to add them to the selection. Shift+Click to select a residue range."
-    )
-
-    force_reload = False
-    if (
-        st.button(":material/undo: Undo selection", disabled=len(selection_history) <= 1)
-        and len(selection_history) >= 2
-    ):
-        # Go one selection backwards
-        selection_history.pop(-1)
-        previous_value = selection_history.pop(-1)
-        st.write(f"Setting selection back to: {', '.join(previous_value)}")
-        workflow.set_selected_segments(previous_value, **selection_kwargs)
-        force_reload = True
-
     pdb_input_string = storage.read_file_str(workflow.get_input_pdb_path())
 
-    if fixed_segments and not st.checkbox("Show full input structure"):
+    if fixed_segments and not st.toggle(
+        "Show full input structure", help="By default, only the fixed input segments are shown."
+    ):
         pdb_input_string = filter_pdb_str(
             pdb_input_string,
             segments=[seg.value for seg in fixed_segments],
@@ -115,8 +119,9 @@ def sequence_selection_fragment(
         if st.toggle(
             "Show glycosylation sites",
             key="show_glycosylation_sites_input",
-            help="The positions of glycans are strictly based on the 5eli NAG template; "
-            "nonexistent links might be displayed.",
+            help="Visualize glycosylation sites on the structure based on glycosylation motifs in the sequence (NXS, NXT, X = any amino acid except P). "
+            "The positions of glycans are approximate, based on the 5eli NAG template, "
+            "nonexistent bonds might be displayed.",
         ):
             pdb_input_string, glycosylated_residues = add_glycan_to_pdb(pdb_input_string)
             if glycosylated_residues:
@@ -153,6 +158,23 @@ def sequence_selection_fragment(
             label_visibility="collapsed",
         )
 
+    with st.container(horizontal=True, vertical_alignment="center"):
+        force_reload = False
+        if (
+            st.button(":material/undo: Undo selection", disabled=len(selection_history) <= 1)
+            and len(selection_history) >= 2
+        ):
+            # Go one selection backwards
+            selection_history.pop(-1)
+            previous_value = selection_history.pop(-1)
+            workflow.set_selected_segments(previous_value, **selection_kwargs)
+            force_reload = True
+
+        selection_container = st.empty()
+        selection_container.write(
+            "Click residues in sequence or structure to add them to the selection. Shift+Click to select a residue range."
+        )
+
     selected_str = molstar_custom_component(
         structures=[
             StructureVisualization(
@@ -186,4 +208,9 @@ def sequence_selection_fragment(
     if not force_reload and selection and (not selection_history or selection != selection_history[-1]):
         selection_history.append(selection)
 
-    st.write(f"Selected segments: {', '.join(selection)}")
+    if selection:
+        if write_segments:
+            selection_container.write(f"Selected segments: {'/'.join(selection)}")
+        else:
+            residues = from_segments_to_hotspots(selection)
+            selection_container.write(f"Selected residues: {residues}")

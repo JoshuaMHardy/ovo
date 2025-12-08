@@ -339,7 +339,9 @@ def selection_step():
         )
         return
 
-    sequence_selection_fragment(__file__, workflow.input_name, contig_index=0, partial_diffusion=True)
+    sequence_selection_fragment(
+        __file__, workflow.input_name, write_segments=False, contig_index=0, partial_diffusion=True
+    )
 
 
 @st.fragment()

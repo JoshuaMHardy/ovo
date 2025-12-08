@@ -4,7 +4,6 @@ from typing import List, Callable, Optional
 from ovo.core.database import DescriptorJob
 from ovo.core.database.descriptors_refolding import REFOLDING_TESTS_BY_TYPE
 from ovo.core.database.models import DescriptorWorkflow, WorkflowTypes, Base
-from ovo.core.scheduler.base_scheduler import Scheduler
 from dataclasses import dataclass, field
 
 
@@ -14,7 +13,7 @@ class RefoldingSupportedDesignWorkflow(ABC):
     def get_refolding_native_pdb_path(self, contig_index: int) -> Optional[str]:
         raise NotImplementedError()
 
-    def get_refolding_design_paths(self, design_ids: list[str]) -> list[str]:
+    def get_refolding_design_paths(self, design_ids: list[str]) -> dict[str, str]:
         raise NotImplementedError()
 
     def get_refolding_design_type(self) -> str:

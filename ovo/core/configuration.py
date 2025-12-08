@@ -103,6 +103,8 @@ class OVOConfig(BaseConfigModel):
     templates: TemplatesConfig = field(default_factory=TemplatesConfig)
     # Remaining configuration settings
     props: ConfigProps = field(default_factory=ConfigProps)
+    # Freeform plugin configuration (plugin module name -> config dict)
+    plugins: dict[str, dict] = field(default_factory=dict)
 
     @model_validator(mode="after")
     def resolve_relative_paths(self):
@@ -177,6 +179,10 @@ schedulers:
       max_memory: 8GB
       config: ./nextflow_local.config
     workdir: ./workdir
+# Plugin-specific configuration can go here, for example:
+# plugins:
+#   ovo_plugin_name:
+#     key: value
 # Uncomment to customize web page content
 # templates:
 #     welcome: templates/welcome.md

@@ -305,12 +305,10 @@ class RFdiffusionWorkflow(DesignWorkflow, RefoldingSupportedDesignWorkflow):
             "RFdiffusion Input PDB": (RFdiffusionWorkflow, "rfdiffusion_params.input_pdb_paths"),
         }
 
-    def get_refolding_design_paths(self, design_ids: list[str]) -> list[str]:
+    def get_refolding_design_paths(self, design_ids: list[str]) -> dict[str, str]:
         from ovo import db
 
-        designs_by_id = {d.id: d for d in db.select(Design, id__in=design_ids)}
-
-        return [designs_by_id[design_id].structure_path for design_id in design_ids]
+        return {d.id: d.structure_path for d in db.select(Design, id__in=design_ids)}
 
 
 @WorkflowTypes.register("RFdiffusion scaffold design")

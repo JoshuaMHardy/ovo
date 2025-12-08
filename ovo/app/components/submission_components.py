@@ -25,8 +25,6 @@ def pool_submission_inputs(page_key: str):
     rounds_by_id = get_or_create_project_rounds(project_id=st.session_state.project.id)
     round_ids = list(rounds_by_id.keys())
 
-    left, right, _ = st.columns([1, 1, 2], vertical_alignment="bottom")
-
     if st.session_state.pool_inputs.get(page_key):
         round_id, pool_name, pool_description = st.session_state.pool_inputs[page_key]
         if round_id is None:
@@ -39,6 +37,7 @@ def pool_submission_inputs(page_key: str):
         round_id = st.session_state["new_round_id"]
         del st.session_state["new_round_id"]
 
+    left, right, _ = st.columns([1, 1, 2], vertical_alignment="bottom")
     with left:
         round_id = st.selectbox(
             "Project Round",

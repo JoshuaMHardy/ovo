@@ -45,7 +45,7 @@ else:
             st.write("No pools created yet in this round")
             st.stop()
 
-    selected_pool_ids = pool_selector_table(pools_table)
+    selected_pool_ids = pool_selector_table(pools_table, st.session_state.project.id)
 
 views = {
     "🔵 Explorer": "ovo.app.pages.designs.explorer:explorer_fragment",

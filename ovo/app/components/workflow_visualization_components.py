@@ -4,6 +4,7 @@ import streamlit as st
 
 from ovo import db, storage
 from ovo.app.components.custom_elements import wrapped_columns
+from ovo.app.components.molstar_custom_component.dataclasses import ContigSegment
 from ovo.core.database import (
     Design,
     descriptors,
@@ -203,6 +204,8 @@ def rfdiffusion_scaffold_design_visualization(design_id: str | None):
         elif prediction_descriptor.b_factor_value == "fractional_plddt":
             pdb_str = pdb_to_mmcif(prediction_pdb, "-", True, fractional_plddt=True)
             description += " (colored by pLDDT confidence)"
+        else:
+            pdb_str = prediction_pdb
 
         molstar_custom_component(
             structures=[
@@ -718,6 +721,27 @@ def visualize_rfdiffusion_design_sequence(design_id: str):
         if workflow.rfdiffusion_params.inpaint_seq
         else []
     )
+    visualize_scaffold_alignment(
+        input_seq_by_resno=input_seq_by_resno,
+        designed_sequences=designed_sequences,
+        parsed_segments=parsed_segments,
+        inpainted_positions=inpainted_positions,
+    )
+
+
+def visualize_scaffold_alignment(
+    input_seq_by_resno: dict[str, dict[str, str]],
+    designed_sequences: dict[str, str],
+    parsed_segments: list[ContigSegment],
+    inpainted_positions: list[str],
+):
+    """Visualize alignment between input and designed sequences based on contig segments.
+
+    :param input_seq_by_resno: Mapping from chain ID -> residue number (as string) -> amino acid.
+    :param designed_sequences: Mapping from chain ID -> designed sequence.
+    :param parsed_segments: List of ContigSegment objects representing the contig segments.
+    :param inpainted_positions: List of positions (e.g., 'A12') that were inpainted.
+    """
     html = [
         f'<div style="font-family: monospace; font-size: 14px; margin: 10px 2px; display: inline-block;">'
         f"&nbsp;&nbsp;&nbsp;&nbsp;Region<br />"

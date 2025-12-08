@@ -226,7 +226,7 @@ def project_round_selector(
     return (selected_round_ids, None) if allow_design_input else selected_round_ids
 
 
-def pool_selector_table(pools_table: pd.DataFrame) -> list[str]:
+def pool_selector_table(pools_table: pd.DataFrame, project_id: str) -> list[str]:
     key = "_".join(pools_table["ID"])
 
     # Prepare table for data editor
@@ -248,6 +248,10 @@ def pool_selector_table(pools_table: pd.DataFrame) -> list[str]:
         default_selection = st.query_params.get("pool_ids").split(",") if st.query_params.get("pool_ids") else []
         st.session_state[default_selection_key] = default_selection
     pools_table.insert(0, "Selected", [pool_id in default_selection for pool_id in pools_table["ID"]])
+    pools_table["Job ID"] = [
+        f"./jobs?pool_ids={pool_id}&project_id={project_id}" if not pd.isna(job_id) else None
+        for pool_id, job_id in pools_table.set_index("ID")["Job ID"].items()
+    ]
 
     edited = st.data_editor(
         pools_table,
@@ -257,6 +261,7 @@ def pool_selector_table(pools_table: pd.DataFrame) -> list[str]:
         disabled=data_columns,
         column_config={
             "Selected": "",
+            "Job ID": st.column_config.LinkColumn(display_text=r"Job ↑", disabled=True),
         },
     )
 

@@ -9,7 +9,7 @@ from ovo.app.components.descriptor_scatterplot import (
 )
 from ovo.app.components.navigation import design_navigation_selector
 from ovo.app.utils.cached_db import get_cached_design, get_cached_pool, get_cached_design_job
-from ovo.core.database.models import Design, Pool, DesignWorkflow, WorkflowTypes
+from ovo.core.database.models import Design, Pool, DesignWorkflow, WorkflowTypes, UnknownWorkflow
 from ovo.app.utils.cached_db import get_cached_pools, get_cached_design_jobs
 
 
@@ -69,6 +69,12 @@ def design_visualization_fragment(selected_design_ids: list[str]):
     pool = get_cached_pool(design.pool_id)
     design_job = get_cached_design_job(pool.design_job_id) if pool.design_job_id else None
     WorkflowType = type(design_job.workflow) if design_job and design_job.workflow else DesignWorkflow
+
+    if design_job and design_job.workflow.is_instance(UnknownWorkflow):
+        st.warning(
+            f"Falling back to basic structure and sequence visualization, "
+            f"failed to load workflow information: {design_job.workflow.error}"
+        )
 
     WorkflowType.visualize_single_design_structures(design_id)
 

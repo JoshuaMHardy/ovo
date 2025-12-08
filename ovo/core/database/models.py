@@ -110,9 +110,9 @@ class Threshold:
         return copied
 
     def __eq__(self, other):
-        # NOTE: Not checking type because it's broken by live-reload
-        # if not isinstance(other, Threshold):
-        #     return False
+        # NOTE: Not checking type because it's broken by live-reload, check attributes instead
+        if not hasattr(other, "min_value") or not hasattr(other, "max_value") or not hasattr(other, "enabled"):
+            return False
         return self.min_value == other.min_value and self.max_value == other.max_value and self.enabled == other.enabled
 
     def format(self, descriptor_name: str = "") -> str | None:
@@ -257,6 +257,7 @@ class Workflow:
             subclass = WorkflowTypes.get(workflow_name)
             for field_name, empty_params in subclass().get_param_fields().items():
                 if data.get(field_name):
+                    # instantiate params dataclasses from dicts
                     data[field_name] = type(empty_params).from_dict(data[field_name])
 
             # convert all thresholds to Threshold objects
@@ -301,28 +302,26 @@ class Workflow:
                     f'Workflow param fields should be declared with field(metadata=dict(tool_name="...")) '
                     f"in {type(self).__name__}.{field_name}"
                 )
-            elif field_name.endswith("params"):
-                raise ValueError(
-                    f'Workflow fields named "params" should be an instance of WorkflowParams in {type(self).__name__}.{field_name}'
-                )
 
         return fields
 
-    def get_param_dict(self) -> dict:
-        """Get all values of all param fields, as flat dictionary"""
-        return {
-            f"{field_name}_{subfield_name}": value
-            for field_name, params in self.get_param_fields().items()
-            for subfield_name, value in params.to_dict().items()
-        }
-
     def get_table_row(self, **kwargs) -> pd.Series:
         """Get all values of all param fields, skip fields with metadata.show_to_user=False, return pd.Series"""
-        param_columns = {
-            (tool_name, subfield_name): value
-            for tool_name, params in self.get_param_fields(human_readable=True).items()
-            for subfield_name, value in params.to_dict(human_readable=True).items()
-        }
+        if param_fields := self.get_param_fields(human_readable=True):
+            param_columns = {
+                (tool_name, subfield_name): value
+                for tool_name, params in param_fields.items()
+                for subfield_name, value in params.to_dict(human_readable=True).items()
+            }
+        elif hasattr(self, "params") and isinstance(self.params, dict):
+            field_def = self.__dataclass_fields__.get("params")
+            if field_def and field_def.metadata and "tool_name" in field_def.metadata:
+                tool_name = field_def.metadata["tool_name"]
+            else:
+                tool_name = "Params"
+            param_columns = {(tool_name, k): v for k, v in self.params.items()}
+        else:
+            param_columns = {}
         return pd.Series(
             {
                 ("Workflow", "type"): self.name,

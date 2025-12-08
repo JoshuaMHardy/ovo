@@ -235,7 +235,7 @@ def hotspots_step():
         st.error("Please provide an input structure in the input structure step.")
         return
 
-    sequence_selection_fragment(__file__, workflow.input_name, color="hydrophobicity")
+    sequence_selection_fragment(__file__, workflow.input_name, color="hydrophobicity", write_segments=False)
 
 
 @st.fragment()

@@ -172,28 +172,29 @@ class ContigsParser:
 
         contigs = "/0 ".join(newContigs)
 
-        reference_tuples = []
         if "complex_con_ref_pdb_idx" in trb_file:
-            for tuple in trb_file["complex_con_ref_pdb_idx"]:
-                newList = [tuple[0], tuple[1], False]
-                reference_tuples.append(newList)
+            ref_idx = trb_file["complex_con_ref_pdb_idx"]
         else:
             assert "con_ref_pdb_idx" in trb_file, "Could not find con_ref_pdb_idx in the .trb file"
-            for tuple in trb_file["con_ref_pdb_idx"]:
-                newList = [tuple[0], tuple[1], False]
-                reference_tuples.append(newList)
+            ref_idx = trb_file["con_ref_pdb_idx"]
 
-        # Do the same for the mapped tuples.
-        mapped_tuples = []
         if "complex_con_hal_pdb_idx" in trb_file:
-            for tuple in trb_file["complex_con_hal_pdb_idx"]:
-                newList = [tuple[0], tuple[1], False]
-                mapped_tuples.append(newList)
+            hal_idx = trb_file["complex_con_hal_pdb_idx"]
         else:
-            assert "con_hal_pdb_idx" in trb_file, "Could not find con_ref_pdb_idx in the .trb file"
-            for tuple in trb_file["con_hal_pdb_idx"]:
-                newList = [tuple[0], tuple[1], False]
-                mapped_tuples.append(newList)
+            assert "con_hal_pdb_idx" in trb_file, "Could not find con_hal_pdb_idx in the .trb file"
+            hal_idx = trb_file["con_hal_pdb_idx"]
+
+        return self.parse_contigs_ref(contigs, ref_idx=ref_idx, hal_idx=hal_idx)
+
+    def parse_contigs_ref(self, contigs: str, ref_idx: list[tuple], hal_idx: list[tuple]):
+        """Parse the contigs and return segments with output numbering."""
+        reference_tuples = []
+        for tuple in ref_idx:
+            reference_tuples.append([tuple[0], tuple[1], False])
+
+        mapped_tuples = []
+        for tuple in hal_idx:
+            mapped_tuples.append([tuple[0], tuple[1], False])
 
         return self._parse_contigs_with_tuples(
             contigs=contigs, mapped_tuples=mapped_tuples, reference_tuples=reference_tuples, include_generated=True

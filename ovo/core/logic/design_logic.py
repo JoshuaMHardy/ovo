@@ -106,6 +106,7 @@ def get_pools_table(project_id: str = None, round_ids: list[str] = None):
                 "Created": naturaltime(pool.created_date_utc, when=datetime.utcnow()),
                 "Accepted Designs": accepted_by_pool.get(pool.id, 0) if pool.processed else "Not processed yet",
                 "Total Designs": total_by_pool.get(pool.id, 0) if pool.processed else None,
+                "Job ID": pool.design_job_id,
             }
             for pool in pools
             if (not pool.design_job_id or pool.design_job_id not in failed_job_ids)
@@ -166,6 +167,8 @@ def submit_design_workflow(
     :param pipeline_name: Override the pipeline name to submit, e.g. ovo.rfdiffusion-end-to-end or a github url with @version
     :return: Tuple of (DesignJob, Pool)
     """
+    scheduler = get_scheduler(scheduler_key)
+
     if existing_pools := db.select(Pool, name=pool_name, round_id=round_id):
         if not return_existing:
             raise ValueError(f"Pool with name '{pool_name}' already exists in this round")
@@ -174,10 +177,18 @@ def submit_design_workflow(
             # No design job associated with this pool, raise an error
             raise ValueError(f"Pool with name '{pool_name}' already exists in this round")
         design_job = db.get(DesignJob, id=pool.design_job_id)
-        if design_job.workflow.get_param_dict() != workflow.get_param_dict():
+        try:
+            before = design_job.workflow.prepare_params(workdir=scheduler.workdir)
+            after = workflow.prepare_params(workdir=scheduler.workdir)
+        except Exception as e:
+            traceback.print_exc()
+            print(f"Error comparing existing pool workflow params: {e}")
+            raise ValueError(
+                f"Pool with name '{pool_name}' already exists in this round and could not compare parameters"
+            )
+
+        if before != after:
             print("Differences:")
-            before = design_job.workflow.get_param_dict()
-            after = workflow.get_param_dict()
             for k in set(before).union(after):
                 if before.get(k) != after.get(k):
                     print(f"  {k}: {before.get(k)} -> {after.get(k)}")
@@ -197,8 +208,6 @@ def submit_design_workflow(
     workflow.validate()
 
     username = get_username()
-
-    scheduler = get_scheduler(scheduler_key)
 
     job_id = scheduler.submit(
         pipeline_name=pipeline_name or workflow.get_pipeline_name(),

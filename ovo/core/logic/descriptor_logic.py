@@ -164,24 +164,24 @@ def prepare_refolding_params(workflow: RefoldingWorkflow, workdir: str) -> dict:
     design_workflows_by_pool_id = {
         p.id: db.get(DesignJob, id=p.design_job_id).workflow for p in pools if p.design_job_id
     }
-    design_ids = []
-    design_paths = []
+    design_paths = {}
     for pool in pools:
         if not pool.design_job_id:
             # In case of custom designs, use design.structure_path as design input
             # TODO add warning if column seems to contain pLDDT - we don't want predicted structures as input!
-            design_ids += [d.id for d in designs if d.pool_id == pool.id]
-            design_paths += [d.structure_path for d in designs if d.pool_id == pool.id]
+            design_paths.update({d.id: d.structure_path for d in designs if d.pool_id == pool.id})
             continue
         design_workflow = design_workflows_by_pool_id[pool.id]
         if not isinstance(design_workflow, RefoldingSupportedDesignWorkflow):
             raise NotImplementedError(f"Workflow does not support refolding evaluation: {design_workflow.name}")
         pool_design_ids = [d.id for d in designs if d.pool_id == pool.id]
-        design_ids += pool_design_ids
-        design_paths += design_workflow.get_refolding_design_paths(pool_design_ids)
+        design_paths.update(design_workflow.get_refolding_design_paths(pool_design_ids))
+
+    if not design_paths:
+        raise ValueError("No refolding structure paths available for the selected designs")
 
     # Prepare a txt file with workflow input paths, each file renamed to design_id.pdb
-    input_designs_txt = storage.prepare_workflow_inputs(design_paths, workdir, names=design_ids)
+    input_designs_txt = storage.prepare_workflow_inputs(design_paths.values(), workdir, names=design_paths.keys())
 
     # Prepare native structure path (if specified)
     native_pdb_path = (
