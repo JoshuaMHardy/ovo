@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from typing import Callable
 
 import pandas as pd
 import streamlit as st
@@ -295,8 +296,11 @@ def next_design_idx(idx, n):
 
 
 def design_navigation_selector(
-    design_ids: list[str], key: str = "selected_design", labels_by_design_id: dict[str, str] | None = None
-) -> str:
+    design_ids: list[str],
+    key: str = "selected_design",
+    fmt: dict[str, str] | Callable | None = None,
+    allow_all: bool = False,
+) -> str | None:
     """
     Display navigation controls (prev/next buttons and dropdown) for browsing designs.
     Updates query params and returns the currently selected design_id.
@@ -304,11 +308,20 @@ def design_navigation_selector(
     Args:
         design_ids: List of design IDs to navigate through
         key: Query parameter key for storing selected design (default: "selected_design")
-        labels_by_design_id: Optional dict mapping design IDs to labels for display in the selectbox
+        fmt: Optional dict or function that maps design IDs to labels for display in the selectbox
+        allow_all: If True, allows selecting all designs (returns None)
 
     Returns:
-        str: Currently selected design_id
+        str: Currently selected design_id or None if all designs are selected
     """
+    if not design_ids:
+        return None
+    if allow_all and len(design_ids) == 1:
+        # simplify case when only one design is available - select the design directly
+        allow_all = False
+    num_designs = len(design_ids)
+    if allow_all:
+        design_ids = ["ALL"] + list(design_ids)
     # Get current index from query params
     if key in st.query_params and st.query_params[key] in design_ids:
         idx = design_ids.index(st.query_params[key])
@@ -319,7 +332,7 @@ def design_navigation_selector(
         idx = 0
     element_key = f"{key}_selectbox_{idx}"
 
-    with st.container(horizontal=True, gap="small"):
+    with st.container(horizontal=True, gap="small", vertical_alignment="center"):
         if st.button(
             ":material/arrow_back_ios:",
             key=f"previous_design_btn_{key}",
@@ -342,14 +355,19 @@ def design_navigation_selector(
 
         with count_container:
             # Write count later so that the idx is at the most recent value
-            # TODO not sure how else to format other than using a button
-            st.button(
-                f"{idx + 1} / {len(design_ids):,}",
-                type="tertiary",
-                key="no_action",
-                width="content",
-                disabled=True,
+            curr = "All" if design_ids[idx] == "ALL" else (idx if allow_all else idx + 1)
+            st.html(
+                f'<div style="text-align: center">{curr} / {num_designs:,}</div>',
             )
+
+        def format_func(design_id):
+            if design_id == "ALL":
+                return f"All {num_designs:,} designs"
+            if fmt:
+                label = fmt.get(design_id, "") if isinstance(fmt, dict) else fmt(design_id)
+            else:
+                label = ""
+            return f"{design_id}" + (f" | {label}" if label else "")
 
         design_id = st.selectbox(
             "Select a design",
@@ -357,10 +375,9 @@ def design_navigation_selector(
             label_visibility="collapsed",
             key=element_key,  # we add idx to force re-creating the component when idx changes
             index=idx,
-            format_func=lambda design_id: f"{design_id}"
-            + (f" | {labels_by_design_id.get(design_id, '')}" if labels_by_design_id else ""),
+            format_func=format_func,
             width="stretch",
         )
         st.query_params[key] = design_id
 
-    return design_id
+    return None if design_id == "ALL" else design_id

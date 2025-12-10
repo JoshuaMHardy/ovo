@@ -46,27 +46,34 @@ def get_descriptor_plot_setting(descriptor: Descriptor) -> Tuple[List[float], bo
     Returns:
         Tuple[List[float], bool, str]: thresholds, reverse_colors, color_by
     """
+    reverse_colors = False
     if descriptor.comparison == "lower_is_better":
         thresholds = [descriptor.min_value, descriptor.warning_value, descriptor.error_value, descriptor.max_value]
         if None in thresholds:
             thresholds = None
-        reverse_colors = True
-        color_by = "thresholds"
+            color_by = "lower_is_better"
+        else:
+            reverse_colors = True
+            color_by = "thresholds"
     elif descriptor.comparison == "higher_is_better":
         thresholds = [descriptor.min_value, descriptor.error_value, descriptor.warning_value, descriptor.max_value]
         if None in thresholds:
             thresholds = None
-        reverse_colors = False
-        color_by = "thresholds"
+            color_by = "higher_is_better"
+        else:
+            color_by = "thresholds"
     else:
         thresholds = None
         reverse_colors = False
         color_by = None
 
+    if isinstance(descriptor, NumericDescriptor) and descriptor.color_scale:
+        color_by = descriptor.color_scale
+
     return thresholds, reverse_colors, color_by
 
 
-def get_descriptor_colormap(thresholds: List[float], reverse_colors: bool = False, colors=None):
+def get_thresholds_colormap(thresholds: List[float], reverse_colors: bool = False, colors=None):
     """
     Create a matplotlib colormap and normalization object corresponding to the Altair redyellowgreen scheme with 4 points in the domain as specified by the thresholds.
 
@@ -140,7 +147,7 @@ def get_rmsd_colormap():
     """
     Create a color function for RMSD values.
     """
-    return get_descriptor_colormap([0, 2, 6, 13], reverse_colors=True)
+    return get_thresholds_colormap([0, 2, 6, 13], reverse_colors=True)
 
 
 def get_higher_is_better_colormap(min_val, max_val):
@@ -209,22 +216,30 @@ def get_descriptor_cmap(descriptor: Descriptor, min_val: float, max_val: float):
         # When both min_value and max_value are explicitly set in the descriptor, use them instead of data min/max
         min_val, max_val = descriptor.min_value, descriptor.max_value
 
+    return get_cmap(
+        color_by=color_by,
+        min_val=min_val,
+        max_val=max_val,
+        thresholds=thresholds,
+        reverse_colors=reverse_colors,
+    )
+
+
+def get_cmap(color_by, min_val: float, max_val: float, thresholds: list[float] = None, reverse_colors: bool = False):
     if pd.isna(min_val) or pd.isna(max_val):
         return lambda val: "#ffffff"
 
-    if descriptor.color_scale == "plddt":
+    if color_by == "plddt":
         cmap = get_plddt_color(lighter=True)
-    elif descriptor.color_scale == "pae":
+    elif color_by == "pae":
         cmap = get_pae_colormap()
-    elif descriptor.color_scale == "rmsd":
+    elif color_by == "rmsd":
         cmap = get_rmsd_colormap()
-    elif descriptor.color_scale:
-        raise ValueError(f"Unknown color scheme {descriptor.color_scale} for descriptor {descriptor.key}")
-    elif thresholds is not None and color_by is not None:
-        cmap = get_descriptor_colormap(thresholds, reverse_colors=reverse_colors)
-    elif descriptor.comparison == "higher_is_better":
+    elif color_by == "thresholds" and thresholds is not None:
+        cmap = get_thresholds_colormap(thresholds, reverse_colors=reverse_colors)
+    elif color_by == "higher_is_better":
         cmap = get_higher_is_better_colormap(min_val, max_val)
-    elif descriptor.comparison == "lower_is_better":
+    elif color_by == "lower_is_better":
         cmap = get_lower_is_better_colormap(min_val, max_val)
     else:
         cmap = get_neutral_colormap(min_val, max_val)
@@ -269,9 +284,9 @@ def get_descriptor_comment(descriptor: Descriptor) -> str:
 
     description = descriptor.description
 
-    if descriptor.color_scale == "plddt":
+    if color_by == "plddt":
         description += f"\n(pLDDT color scheme: > 90 very high confidence, > 70 high confidence, > 50 low confidence, < 50 very low confidence)"
-    elif descriptor.color_scale == "pae":
+    elif color_by == "pae":
         description += f"\n(PAE color scheme: lower values are better, higher values indicate less confidence)"
     elif thresholds is not None and color_by == "thresholds":
         description += f"\n(Minimum value: {descriptor.min_value}, Maximum value: {descriptor.max_value},  Warning value: {descriptor.warning_value}, Error value: {descriptor.error_value})"

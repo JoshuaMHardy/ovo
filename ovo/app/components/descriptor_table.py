@@ -93,3 +93,52 @@ def descriptor_table(design_ids: List[str], descriptors_df: pd.DataFrame, descri
     styled_df = selected_df.style.apply(lambda _: style_df, axis=None)
 
     st.dataframe(styled_df, column_config=column_config, key="descriptor_table")
+
+
+def residue_number_descriptor_detail_table(descriptor: Descriptor, descriptor_values: pd.Series):
+    """
+    Returns (table_data, column_config, caption, format_func) for ResidueNumberDescriptor detail view.
+    table_data: DataFrame with designs as rows, unique residues as columns, checkmark if present.
+    column_config: dict for st.dataframe
+    caption: str
+    format_func: function for design_id formatting
+    """
+    unique_residues = set()
+    design_to_residues = {}
+
+    # Build mapping from design to set of residues, and collect all unique residues
+    for design_id, val in descriptor_values.items():
+        residues = {r.strip() for r in str(val).split(",") if r.strip()}
+        design_to_residues[design_id] = residues
+        unique_residues.update(residues)
+    unique_residues = sorted(unique_residues)
+    # Remove "None" if present
+    if "None" in unique_residues:
+        unique_residues.remove("None")
+    bool_data = []
+
+    # For each design, create a boolean row for presence of each residue
+    for design_id in descriptor_values.index:
+        row = [res in design_to_residues[design_id] for res in unique_residues]
+        bool_data.append(row)
+    bool_df = pd.DataFrame(bool_data, index=descriptor_values.index, columns=unique_residues)
+
+    # Add column for number of residues present in each design and sort
+    bool_df["# residues present"] = bool_df.sum(axis=1)
+    bool_df = bool_df.sort_values(by="# residues present", ascending=False)
+
+    caption = f"Designs (rows) vs residues (columns) for **{descriptor.name}**"
+    column_config = {}
+    column_config["# residues present"] = st.column_config.ProgressColumn(
+        "# residues present",
+        format="%d",
+        min_value=0,
+        max_value=len(unique_residues),
+        width="small",
+        help=f"Number of {descriptor.name} present in the design",
+    )
+    formatted_strings = {
+        design_id: f"{design_id} | #residues={row['# residues present']}" for design_id, row in bool_df.iterrows()
+    }
+    format_func = lambda design_id: formatted_strings.get(design_id, str(design_id))
+    return bool_df, column_config, caption, format_func

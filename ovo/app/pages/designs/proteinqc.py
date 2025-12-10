@@ -6,11 +6,13 @@ from ovo.app.components.descriptor_explorer import descriptor_explorer
 from ovo.app.components.descriptor_job_components import refresh_descriptors
 from ovo.app.components.descriptor_table import descriptor_table
 from ovo.app.components.descriptor_tiles import descriptor_overview_tiles
+from ovo.app.components.navigation import design_navigation_selector
 from ovo.app.utils.cached_db import (
     get_cached_pools,
     get_cached_design_ids,
     get_cached_available_descriptors,
 )
+from ovo.app.utils.protein_qc_plots import source_selectbox
 from ovo.core.database import Pool, Design, NumericGlobalDescriptor
 from ovo.core.database.descriptors_proteinqc import PROTEINQC_MAIN_DESCRIPTORS
 from ovo.core.database.models_proteinqc import ProteinQCWorkflow, PROTEINQC_TOOLS
@@ -24,8 +26,6 @@ from ovo.core.logic.proteinqc_logic import get_available_schedulers
 
 @st.fragment
 def proteinqc_fragment(pool_ids: list[str], design_ids: list[str] | None = None):
-    pools = get_cached_pools(pool_ids)
-
     if design_ids is None:
         # design_ids not explicitly passed, use all accepted designs in the selected pools
         design_ids = get_cached_design_ids(pool_ids=pool_ids, accepted=True)
@@ -80,7 +80,20 @@ def proteinqc_fragment(pool_ids: list[str], design_ids: list[str] | None = None)
             key=f"download_proteinqc",
         )
 
-    descriptor_overview_tiles(descriptors_df, descriptors_by_key)
+    st.subheader("Results")
+
+    # TODO rank by number of flags, pass fmt to navigation selector
+    ranked_ids = descriptors_df.index.tolist()
+    left, right = st.columns([3, 1], vertical_alignment="bottom")
+    with left:
+        design_id = design_navigation_selector(ranked_ids, allow_all=True)
+    with right:
+        histogram_source = source_selectbox(st.query_params.get("ref"), key_prefix="proteinqc_reference")
+        st.query_params["ref"] = histogram_source
+
+    descriptor_overview_tiles(
+        descriptors_df, descriptors_by_key, design_id=design_id, histogram_source=histogram_source
+    )
 
     st.subheader("Descriptor explorer")
     descriptor_explorer(descriptors_df, numeric_descriptors_by_key, single_design=False)

@@ -5,7 +5,8 @@ import streamlit as st
 
 from ovo import db, storage
 from ovo.app.components.descriptor_job_components import refresh_descriptors
-from ovo.app.components.descriptor_tiles import get_residue_presence_df, residue_number_descriptor_detail_table
+from ovo.app.components.descriptor_table import residue_number_descriptor_detail_table
+from ovo.app.components.descriptor_tiles import get_residue_presence_df
 from ovo.app.components.download_component import download_job_designs_component
 from ovo.app.components.molstar_custom_component import molstar_custom_component, StructureVisualization
 from ovo.app.components.navigation import design_navigation_selector
@@ -368,7 +369,7 @@ def interface_design_visualization_fragment(
     # Use the navigation selector component
     labels_by_design_id = descriptors_df.loc[selected_design_ids, INTERFACE_TARGET_RESIDUES.key].to_dict()
     design_id = design_navigation_selector(
-        selected_design_ids, key="interface_selected_design", labels_by_design_id=labels_by_design_id
+        selected_design_ids, key="interface_selected_design", fmt=labels_by_design_id
     )
 
     st.subheader(design_id)
