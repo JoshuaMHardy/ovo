@@ -19,7 +19,7 @@ import os
 import sys
 import importlib.metadata
 
-__version__ = importlib.metadata.version("ovo-app")
+__version__ = importlib.metadata.version("ovo")
 
 try:
     if sys.platform == "win32":

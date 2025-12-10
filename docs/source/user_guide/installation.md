@@ -60,7 +60,7 @@ Verify: `java -version`
 First, install OVO using:
 
 ```sh
-pip install ovo-app
+pip install ovo
 ```
 
 <details>
@@ -71,7 +71,7 @@ pip install ovo-app
 conda create -n ovo python=3.13
 conda activate ovo
 # Install OVO with pip
-pip install ovo-app
+pip install ovo
 ```
 </details>
 
