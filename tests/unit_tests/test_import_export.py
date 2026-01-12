@@ -2,6 +2,7 @@ import os
 import tempfile
 import zipfile
 import pytest
+from dataclasses import dataclass
 
 from ovo import db, storage
 from ovo.core.database.models_rfdiffusion import (
@@ -15,6 +16,9 @@ from ovo import (
     Design,
     DesignSpec,
     DesignJob,
+    Artifact,
+    ArtifactTypes,
+    ProjectArtifact,
 )
 from ovo.core.logic.import_export_logic import export_project, import_project
 
@@ -71,6 +75,33 @@ def test_export_import_cycle(example_pdb_path):
         assert len(test_design.spec.chains) == 1
         assert os.path.exists(os.path.join(storage.storage_root, test_design.structure_path))
 
+    # Test artifact for import/export testing
+    @ArtifactTypes.register()
+    @dataclass
+    class TestArtifact(Artifact):
+        """Test artifact with file storage paths"""
+
+        file_paths: list[str] | None = None
+
+        def get_storage_paths(self) -> list[str]:
+            return self.file_paths if self.file_paths else []
+
+    # Create artifact files for testing
+    artifact_file_path = storage.store_file_str(
+        "Test artifact content", f"project/{test_project.id}/artifacts/test_artifact.txt"
+    )
+
+    # Create a project artifact
+    test_artifact = ProjectArtifact(
+        project_id=test_project.id,
+        artifact_type=TestArtifact.artifact_type,
+        artifact=TestArtifact(
+            file_paths=[artifact_file_path],
+        ),
+    )
+    db.save(test_artifact)
+    assert os.path.exists(os.path.join(storage.storage_root, artifact_file_path))
+
     try:
         # Export the project
         export_zip_path = export_project(test_project.id)
@@ -85,11 +116,14 @@ def test_export_import_cycle(example_pdb_path):
         db.remove(Project, test_project.id)
         db.remove(Design, test_design.id)
         db.remove(DesignJob, test_design_job.id)
-        # Remove pdb file
+        db.remove(ProjectArtifact, test_artifact.id)
+        # Remove files
         os.unlink(os.path.join(storage.storage_root, test_design.structure_path))
         os.unlink(os.path.join(storage.storage_root, input_pdb_path))
+        os.unlink(os.path.join(storage.storage_root, artifact_file_path))
         assert not db.count(Project, id=test_project.id), "Project should be deleted"
         assert not db.count(Design, id=test_design.id), "Design should be deleted"
+        assert not db.count(ProjectArtifact, id=test_artifact.id), "Artifact should be deleted"
 
         # Extract ZIP file
         with tempfile.TemporaryDirectory() as temp_root:
@@ -107,6 +141,7 @@ def test_export_import_cycle(example_pdb_path):
             assert counts.get("project") == 1
             assert counts.get("round") == 1
             assert counts.get("pool") == 1
+            assert counts.get("project_artifact") == 1
             assert not db.count(Project, id=test_project.id), "Project should still be deleted"
 
             # Import the data
@@ -135,10 +170,17 @@ def test_export_import_cycle(example_pdb_path):
             "Path referenced inside Workflow dataclass should also be copied"
         )
 
+        imported_artifact = db.get(ProjectArtifact, test_artifact.id)
+        assert imported_artifact.project_id == test_project.id
+        assert isinstance(imported_artifact.artifact, TestArtifact)
+        assert imported_artifact.artifact.file_paths == [artifact_file_path]
+        assert os.path.exists(os.path.join(storage.storage_root, artifact_file_path)), "Artifact file should be copied"
+
         # Verify import results
         assert counts["project"] == 1
         assert counts["round"] == 1
         assert counts["pool"] == 1
+        assert counts["project_artifact"] == 1
 
     finally:
         # Clean up export file

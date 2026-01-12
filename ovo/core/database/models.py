@@ -19,7 +19,11 @@ from ovo.core.database.encoder import DataclassType
 from ovo.core.database.db_proxy import DBProxy
 from ovo.core.scheduler.base_scheduler import Scheduler
 from ovo.core.utils.formatting import generate_id
-from ovo.core.utils.pdb import get_sequences_from_pdb_str, ChainNotFoundError, get_standardized_remarks_from_pdb_str
+from ovo.core.utils.pdb import (
+    get_sequences_from_pdb_str,
+    ChainNotFoundError,
+    get_standardized_remarks_from_pdb_str,
+)
 import json
 
 
@@ -662,6 +666,66 @@ class DescriptorValue(Base):
     value: Mapped[str] = mapped_column(String, nullable=True)
 
 
+class ArtifactTypes:
+    # artifact type -> class
+    _registry = {}
+
+    @classmethod
+    def register(cls):
+        """Decorator to register an Artifact class"""
+
+        def decorator(registered_class):
+            artifact_type = f"{registered_class.__module__}.{registered_class.__qualname__}"
+            cls._registry[artifact_type] = registered_class
+            registered_class.artifact_type = artifact_type
+            return registered_class
+
+        return decorator
+
+    @classmethod
+    def exists(cls, artifact_type):
+        """Check if an artifact of the given type exists"""
+        return artifact_type in cls._registry
+
+    @classmethod
+    def get(cls, artifact_type):
+        """Get artifact class by type string"""
+        if artifact_type not in cls._registry:
+            raise ValueError(
+                f"Artifact type '{artifact_type}' is not registered, available types: {list(cls._registry.keys())}"
+            )
+        return cls._registry[artifact_type]
+
+
+@dataclass
+class Artifact(ABC):
+    # artifact_type is filled in by @ArtifactTypes.register decorator
+    artifact_type: str = field(init=False)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Artifact":
+        data_copy = copy(data)
+        artifact_type: str = data_copy.pop("artifact_type")
+        if not ArtifactTypes.exists(artifact_type):
+            raise ValueError(f"Artifact type '{artifact_type}' is not registered")
+        ArtifactSubclass = ArtifactTypes.get(artifact_type)
+        return ArtifactSubclass(**data_copy)
+
+    @abstractmethod
+    def get_storage_paths(self) -> list[str]:
+        raise NotImplementedError()
+
+
+class ProjectArtifact(Base):
+    __tablename__ = "project_artifact"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default_factory=lambda: str(uuid.uuid4()))
+    project_id: Mapped[str] = mapped_column(String, nullable=False, default=None, index=True)
+    artifact_type: Mapped[str] = mapped_column(String, nullable=False, default=None, index=True)
+    descriptor_job_id: Mapped[str] = mapped_column(String, nullable=True, default=None, index=True)
+    design_job_id: Mapped[str] = mapped_column(String, nullable=True, default=None, index=True)
+    artifact: Mapped[Artifact] = mapped_column(DataclassType(Artifact), default=None, nullable=False)
+
+
 @dataclass
 class Descriptor(ABC):
     # Human-readable name of the descriptor
@@ -833,4 +897,7 @@ __all__ = [
     "FileDescriptor",
     "StructureFileDescriptor",
     "DataclassType",
+    "Artifact",
+    "ArtifactTypes",
+    "ProjectArtifact",
 ]

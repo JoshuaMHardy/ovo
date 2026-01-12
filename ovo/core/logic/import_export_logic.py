@@ -18,6 +18,7 @@ from ovo.core.database.models import (
     DescriptorJob,
     DescriptorValue,
     FileDescriptor,
+    ProjectArtifact,
 )
 from ovo.core.storage import Storage
 from ovo.core.utils.formatting import safe_filename
@@ -36,6 +37,7 @@ IMPORT_EXPORT_CONFIGS = [
         "model_class": DescriptorValue,
         "filter": lambda o: dict(descriptor_job_id__in=[j.id for j in o["descriptor_job"]]),
     },
+    {"model_class": ProjectArtifact, "filter": lambda o: dict(project_id__in=[p.id for p in o["project"]])},
 ]
 
 
@@ -172,6 +174,12 @@ def export_import_project(
                 ):
                     storage_paths.append(obj.value)
 
+        if table_name == ProjectArtifact.__tablename__:
+            for obj in all_objects[table_name]:
+                if obj.artifact:
+                    artifact_paths = obj.artifact.get_storage_paths()
+                    storage_paths.extend(artifact_paths)
+
     print("All entities fetched from DB!")
     counts["storage_file"] = len(storage_paths)
 
@@ -272,6 +280,7 @@ def export_project(project_id: str, output_zip_path: str = None, accepted_only: 
         - Designs: {counts["design"]}
         - Storage files: {counts["storage_file"]}
         - Descriptor value: {counts["descriptor_value"]}
+        - Project artifacts: {counts["project_artifact"]}
     """.lstrip()
 
         with open(os.path.join(temp_home, "README.txt"), "wt") as f:

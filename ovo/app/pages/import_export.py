@@ -30,6 +30,7 @@ def show_counts(counts: dict[str, int]):
     with col2:
         st.metric("Total Designs", counts.get("design"))
         st.metric("Storage Files", counts.get("storage_file"))
+        st.metric("Artifacts", counts.get("project_artifact"))
 
     with col3:
         st.metric("Descriptor Jobs", counts.get("descriptor_job"))
