@@ -140,6 +140,7 @@ if __name__ == "__main__":
         data_dir=options.params,
         use_multimer=options.multimer,
         model_names=["model_1_multimer_v3" if options.multimer else "model_1_ptm"],
+        use_initial_guess=not options.blind,
     )
     paths = sorted(glob.glob(os.path.join(options.input_dir, "*.pdb")))
     print(f"Getting sequence lengths from {len(paths):,} PDBs")
@@ -174,7 +175,6 @@ if __name__ == "__main__":
                 rm_target=False,
                 rm_binder=not options.use_binder_template,
                 rm_template_ic=not options.use_interface_template,
-                use_initial_guess=not options.blind,
                 # Hotspots are used for connectivity loss
                 # NOTE that rfdiffusion renumbers the target chain from 1 so you need to recalculate the position numbers
                 hotspot=options.hotspot if options.hotspot else None,

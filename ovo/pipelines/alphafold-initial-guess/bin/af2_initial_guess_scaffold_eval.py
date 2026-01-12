@@ -284,6 +284,7 @@ if __name__ == "__main__":
         data_dir=options.params,
         use_templates=not options.no_templates,
         use_multimer=options.multimer,
+        use_initial_guess=True,
     )
     paths = sorted(glob.glob(os.path.join(options.input_dir, "*.pdb")))
     print(f"Getting info from {len(paths):,} PDBs")
@@ -347,7 +348,6 @@ if __name__ == "__main__":
                 path,
                 chain=chain,
                 rm_template=rm_template,
-                use_initial_guess=True,
             )
             model.set_seq(mode="wildtype")
             model.set_opt(num_recycles=options.num_recycles)
