@@ -50,7 +50,9 @@ try:
 
     schedulers: dict[str, Scheduler] = {}
     # make sure default scheduler is first in the dict
-    sorted_scheduler_configs = sorted(config.schedulers.items(), key=lambda p: p[0] == config.default_scheduler, reverse=True)
+    sorted_scheduler_configs = sorted(
+        config.schedulers.items(), key=lambda p: p[0] == config.default_scheduler, reverse=True
+    )
     for scheduler_key, scheduler_config in sorted_scheduler_configs:
         if scheduler_config.type not in SchedulerTypes.REGISTERED_CLASSES:
             raise ValueError(
