@@ -247,10 +247,13 @@ def get_shell_config_path():
     """Get path to .bashrc or .zshrc based on the current shell."""
     shell = os.path.basename(os.environ.get("SHELL", ""))
     home = str(Path.home())
+    config_path = None
     if "zsh" in shell:
-        return os.path.join(home, ".zshrc")
+        config_path = os.path.join(home, ".zshrc")
     elif "bash" in shell:
-        return os.path.join(home, ".bashrc")
+        config_path = os.path.join(home, ".bashrc")
+    if config_path and os.path.exists(config_path):
+        return config_path
     return None
 
 

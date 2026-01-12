@@ -49,7 +49,9 @@ try:
     os.environ["NXF_HOME"] = config.nextflow_home
 
     schedulers: dict[str, Scheduler] = {}
-    for scheduler_key, scheduler_config in config.schedulers.items():
+    # make sure default scheduler is first in the dict
+    sorted_scheduler_configs = sorted(config.schedulers.items(), key=lambda p: p[0] == config.default_scheduler, reverse=True)
+    for scheduler_key, scheduler_config in sorted_scheduler_configs:
         if scheduler_config.type not in SchedulerTypes.REGISTERED_CLASSES:
             raise ValueError(
                 f"Scheduler type '{scheduler_config.type}' found in config is not registered in this OVO server, make sure it was registered and imported. Supported schedulers: {SchedulerTypes.REGISTERED_CLASSES.keys()}"
