@@ -291,11 +291,24 @@ def design_interface_detail(
         interface_residues = [r.strip() for r in str(interface_residues_str).split(",") if r.strip()]
 
     # TODO: Improve visualization of the interface - Maybe it is possible to display contacts?
+    colors = {
+        "chain-id": "Color by chain",
+        "hydrophobicity": "Color by hydrophobicity (green = hydrophobic, red = hydrophilic)",
+        "residue-charge": "Color by residue charge (blue = positive, red = negative)",
+    }
+    color = st.selectbox(
+        "Color scheme",
+        options=list(colors.keys()),
+        format_func=lambda x: colors[x],
+        key="color_scheme_input",
+        label_visibility="collapsed",
+        width=500,
+    )
     molstar_custom_component(
         structures=[
             StructureVisualization(
                 pdb=storage.read_file_str(design.structure_path),
-                color="chain-id",
+                color=color,
                 representation_type="cartoon+ball-and-stick",
                 highlighted_selections=get_molstar_residue_selections(interface_residues),
             )

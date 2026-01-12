@@ -24,7 +24,7 @@ export type StreamlitComponentValue = {
 
 export type ChainVisualization = {
     chain_id: string;
-    color: "uniform" | "hydrophobicity";
+    color: "uniform" | "chain-id" | "hydrophobicity" | "plddt" | "molecule-type" | "secondary-structure" | "residue-name" | "residue-charge";
     color_params: ColorParameters | null;
     representation_type: "cartoon" | "molecular-surface" | "gaussian-surface" | "ball-and-stick";
     residues: number[] | null;
@@ -34,7 +34,7 @@ export type ChainVisualization = {
 export type StructureVisualization = {
     pdb: string;
     contigs: string | null;
-    color: "uniform" | "hydrophobicity" | "plddt";
+    color: "uniform" | "chain-id" | "hydrophobicity" | "plddt" | "molecule-type" | "secondary-structure" | "residue-name" | "residue-charge";
     color_params: ColorParameters | null;
     representation_type: "cartoon" | "molecular-surface" | "gaussian-surface" | "ball-and-stick";
     highlighted_selections: string[] | null;

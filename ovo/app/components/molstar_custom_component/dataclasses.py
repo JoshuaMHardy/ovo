@@ -36,7 +36,7 @@ class ChainVisualization:
     ----------
     chain_id : str
         The chain ID.
-    color : Literal["uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name"], optional
+    color : Literal["uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name", "residue-charge"], optional
         The color scheme to use, by default "uniform".
     color_params : dict, optional
         Color parameters.
@@ -52,7 +52,14 @@ class ChainVisualization:
 
     chain_id: str
     color: Literal[
-        "uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name"
+        "uniform",
+        "chain-id",
+        "hydrophobicity",
+        "plddt",
+        "molecule-type",
+        "secondary-structure",
+        "residue-name",
+        "residue-charge",
     ] = "uniform"
     color_params: dict | None = None
     representation_type: Literal[
@@ -72,7 +79,7 @@ class StructureVisualization:
         A PDB/mmCIF content of the structure to visualize. Can also be a URL to a PDB/mmCIF file.
     contigs : list[ContigSegment], optional
         A list of contig segments to show (e.g. on the top of the viewer), by default None.
-    color : Literal["uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name"], optional
+    color : Literal["uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name", "residue-charge"], optional
         The color scheme to use, by default "uniform".
     color_params : dict, optional
         Color parameters.
@@ -89,7 +96,14 @@ class StructureVisualization:
     pdb: str
     contigs: str | list[ContigSegment] | None = None
     color: Literal[
-        "uniform", "chain-id", "hydrophobicity", "plddt", "molecule-type", "secondary-structure", "residue-name"
+        "uniform",
+        "chain-id",
+        "hydrophobicity",
+        "plddt",
+        "molecule-type",
+        "secondary-structure",
+        "residue-name",
+        "residue-charge",
     ] = "uniform"
     color_params: dict | None = None
     representation_type: (

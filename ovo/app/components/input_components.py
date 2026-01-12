@@ -148,6 +148,7 @@ def sequence_selection_fragment(
         colors = {
             "chain-id": "Color by chain",
             "hydrophobicity": "Color by hydrophobicity (green = hydrophobic, red = hydrophilic)",
+            "residue-charge": "Color by residue charge (blue = positive, red = negative)",
         }
         color = st.selectbox(
             "Color scheme",

@@ -165,14 +165,25 @@ def detail_design(
 
     with left:
         colors_and_types = {
-            ("chain-id", "cartoon"): ("Cartoon", ""),
+            ("chain-id", "cartoon"): (
+                "Cartoon",
+                "",
+            ),
             ("hydrophobicity", "molecular-surface"): (
-                "Surface hydrophobicity",
+                "Surface | Hydrophobicity",
                 "Surface colored by hydrophobicity scale: :green-badge[**green** = hydroPHOBIC] :red-badge[**red** = hydroPHILIC]",
             ),
             ("hydrophobicity", "cartoon+ball-and-stick"): (
-                "Side chain hydrophobicity",
+                "Side chains | Hydrophobicity",
                 "Cartoon and side chains colored by hydrophobicity scale: :green-badge[**green** = hydroPHOBIC] :red-badge[**red** = hydroPHILIC]",
+            ),
+            ("residue-charge", "molecular-surface"): (
+                "Surface | Residue charge",
+                "Surface colored by residue charge: :blue-badge[**blue** = positive] :red-badge[**red** = negative]",
+            ),
+            ("residue-charge", "cartoon+ball-and-stick"): (
+                "Side chains | Residue charge",
+                "Cartoon and side chains colored by residue charge: :blue-badge[**blue** = positive] :red-badge[**red** = negative]",
             ),
         }
         rep_type_index = 0
