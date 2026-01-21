@@ -19,6 +19,7 @@ import argparse
 import multiprocessing
 import json
 import sys
+import tempfile
 
 from pyrosetta import *
 from rosetta.protocols.rosetta_scripts import *
@@ -38,12 +39,63 @@ p.add_argument("--out-pdb", help="Save PDB structures to this directory after ap
 p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
 args = p.parse_args()
 
-# TODO include "-holes:dalphaball /software/rosetta/DAlphaBall.gcc"
-# As in https://github.com/RosettaCommons/RFDesign/blob/main/scripts/get_interface_metrics.py
-# To enable BuriedUnsatHbonds in interface_metrics_rfpeptides.xml
-init("-corrections::beta_nov16 -detect_disulf false -run:preserve_header true")
+# Build PyRosetta init flags
+init_flags = " -corrections::beta_nov16 -detect_disulf false -run:preserve_header true"
+
+# Auto-detect DAlphaBall for accurate buried unsat calculations
+def find_dalphaball():
+    """Auto-detect DAlphaBall executable from standard OVO location"""
+    import platform
+    
+    ovo_home = os.environ.get("OVO_HOME")
+    if ovo_home:
+        # Detect platform-specific executable name
+        if platform.system() == "Darwin":
+            executable = "DAlphaBall.macgcc"
+        else:
+            executable = "DAlphaBall.gcc"
+        
+        standard_path = os.path.join(ovo_home, "bin", executable)
+        if os.path.isfile(standard_path):
+            return standard_path
+    
+    return None
+
+dalphaball_path = find_dalphaball()
+has_dalphaball = False
+
+if dalphaball_path:
+    if os.path.isfile(dalphaball_path):
+        init_flags += f" -holes:dalphaball {dalphaball_path}"
+        has_dalphaball = True
+        print(f"✓ DAlphaBall found: {dalphaball_path}")
+    else:
+        print(f"⚠ Warning: DAlphaBall path specified but not found: {dalphaball_path}")
+        print("  Using standard SASA instead")
+else:
+    print("ℹ DAlphaBall not found, using standard SASA")
+    print("  Run 'ovo init dalphaball' for more accurate buried unsat calculations")
+
+init(init_flags)
 parser = RosettaScriptsParser()
-protocol_path = script_dir + "/interface_metrics_rfdesign.xml"
+
+# Prepare XML with appropriate dalphaball_sasa setting
+xml_template_path = os.path.join(script_dir, "interface_metrics_rfdesign.xml")
+with open(xml_template_path) as f:
+    xml_content = f.read()
+
+# Adjust dalphaball_sasa based on availability
+if has_dalphaball:
+    # Keep dalphaball_sasa="true"
+    protocol_path = xml_template_path
+else:
+    # Change dalphaball_sasa="true" to dalphaball_sasa="false" for graceful degradation
+    xml_content = xml_content.replace('dalphaball_sasa="true"', 'dalphaball_sasa="false"')
+    # Write to temporary file
+    temp_xml = tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False)
+    temp_xml.write(xml_content)
+    temp_xml.close()
+    protocol_path = temp_xml.name
 
 ncpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
 print(f"Using {ncpu} cores")

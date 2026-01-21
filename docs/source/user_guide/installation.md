@@ -131,7 +131,39 @@ Most de novo design workflows in OVO require more computational resources than w
 You can set up additional schedulers to run workflows on High Performance Computing (HPC) clusters or cloud platforms.
 Please refer to [Schedulers](../user_guide/schedulers.md) for instructions.
 
-### 6. Run the OVO web app
+### 6. Optional enhancements
+
+#### DAlphaBall for accurate buried unsatisfied H-bond calculations (optional)
+
+For binder designs with PyRosetta interface metrics, you can optionally install DAlphaBall to get more accurate buried unsatisfied hydrogen bond calculations using rotation-invariant SASA:
+
+```bash
+ovo init dalphaball
+```
+
+This requires build tools (`git`, `make`, `g++`, `gfortran`). The executable will be automatically detected from `$OVO_HOME/bin/`. If not installed, OVO will use standard SASA calculations instead.
+
+<details>
+<summary>Installing build tools if needed</summary>
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install build-essential gfortran
+```
+
+**macOS:**
+```bash
+xcode-select --install
+brew install gcc
+```
+
+**Conda:**
+```bash
+conda install -c conda-forge gfortran gmp
+```
+</details>
+
+### 7. Run the OVO web app
 
 Start the OVO app:
 

@@ -333,6 +333,54 @@ def rfdiffusion(scheduler: str = None):
 
 
 @app.command()
+def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation directory for DAlphaBall executable")):
+    """Build and configure DAlphaBall for accurate buried unsat calculations"""
+    from ovo import config
+    import subprocess
+    import yaml
+
+    console.print("[bold]Building DAlphaBall[/bold]")
+    console.print("DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter.")
+    console.print("")
+
+    # Set default install directory
+    if install_dir is None:
+        install_dir = os.path.join(config.dir, "bin")
+    install_dir = os.path.abspath(os.path.expanduser(install_dir))
+
+    # Get path to build script
+    build_script = os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "build_dalphaball.sh")
+    
+    if not os.path.exists(build_script):
+        raise OVOCliError(f"Build script not found: {build_script}")
+
+    # Run build script
+    console.print(f"Installing to: [bold]{install_dir}[/bold]")
+    try:
+        subprocess.run(["bash", build_script, install_dir], check=True)
+    except subprocess.CalledProcessError as e:
+        raise OVOCliError(f"Failed to build DAlphaBall: {e}")
+
+    # Detect the executable name
+    import platform
+    if platform.system() == "Darwin":
+        executable_name = "DAlphaBall.macgcc"
+    else:
+        executable_name = "DAlphaBall.gcc"
+    
+    dalphaball_path = os.path.join(install_dir, executable_name)
+    
+    if not os.path.exists(dalphaball_path):
+        raise OVOCliError(f"DAlphaBall executable not found after build: {dalphaball_path}")
+
+    console.print("")
+    console.print("[bold][green]✔[/green] DAlphaBall installed successfully[/bold]")
+    console.print(f"Location: [bold]{dalphaball_path}[/bold]")
+    console.print("")
+    console.print("DAlphaBall will be automatically used for PyRosetta interface metrics.")
+
+
+@app.command()
 def proteinqc(
     tool_keys: str = typer.Option(
         "all",
