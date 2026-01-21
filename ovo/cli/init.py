@@ -343,9 +343,9 @@ def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation
     console.print("DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter.")
     console.print("")
 
-    # Set default install directory
+    # Set default install directory to reference_files/bin (follows OVO design pattern)
     if install_dir is None:
-        install_dir = os.path.join(config.dir, "bin")
+        install_dir = os.path.join(config.reference_files_dir, "bin")
     install_dir = os.path.abspath(os.path.expanduser(install_dir))
 
     # Get path to build script

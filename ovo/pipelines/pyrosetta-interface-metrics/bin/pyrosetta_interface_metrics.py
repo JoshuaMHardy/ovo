@@ -37,6 +37,7 @@ p.add_argument(
 p.add_argument("--relax", action="store_true", default=False, help="Relax structures before scoring")
 p.add_argument("--out-pdb", help="Save PDB structures to this directory after applying movers")
 p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
+p.add_argument("--reference-files-dir", help="Directory containing reference files (model weights, executables)")
 args = p.parse_args()
 
 # Build PyRosetta init flags
@@ -44,18 +45,18 @@ init_flags = " -corrections::beta_nov16 -detect_disulf false -run:preserve_heade
 
 # Auto-detect DAlphaBall for accurate buried unsat calculations
 def find_dalphaball():
-    """Auto-detect DAlphaBall executable from standard OVO location"""
+    """Auto-detect DAlphaBall executable from OVO reference_files_dir"""
     import platform
     
-    ovo_home = os.environ.get("OVO_HOME")
-    if ovo_home:
+    reference_files_dir = args.reference_files_dir
+    if reference_files_dir:
         # Detect platform-specific executable name
         if platform.system() == "Darwin":
             executable = "DAlphaBall.macgcc"
         else:
             executable = "DAlphaBall.gcc"
         
-        standard_path = os.path.join(ovo_home, "bin", executable)
+        standard_path = os.path.join(reference_files_dir, "bin", executable)
         if os.path.isfile(standard_path):
             return standard_path
     
@@ -86,16 +87,16 @@ with open(xml_template_path) as f:
 
 # Adjust dalphaball_sasa based on availability
 if has_dalphaball:
-    # Keep dalphaball_sasa="true"
-    protocol_path = xml_template_path
-else:
-    # Change dalphaball_sasa="true" to dalphaball_sasa="false" for graceful degradation
-    xml_content = xml_content.replace('dalphaball_sasa="true"', 'dalphaball_sasa="false"')
+    # Change dalphaball_sasa="false" to dalphaball_sasa="true" to enable rotation-invariant SASA
+    xml_content = xml_content.replace('dalphaball_sasa="false"', 'dalphaball_sasa="true"')
     # Write to temporary file
     temp_xml = tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False)
     temp_xml.write(xml_content)
     temp_xml.close()
     protocol_path = temp_xml.name
+else:
+    # Use template as-is with dalphaball_sasa="false"
+    protocol_path = xml_template_path
 
 ncpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
 print(f"Using {ncpu} cores")

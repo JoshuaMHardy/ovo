@@ -141,7 +141,7 @@ For binder designs with PyRosetta interface metrics, you can optionally install 
 ovo init dalphaball
 ```
 
-This requires build tools (`git`, `make`, `g++`, `gfortran`). The executable will be automatically detected from `$OVO_HOME/bin/`. If not installed, OVO will use standard SASA calculations instead.
+This requires build tools (`git`, `make`, `g++`, `gfortran`). The executable will be installed to `$OVO_HOME/reference_files/bin/` and automatically detected by OVO pipelines. If not installed, OVO will use standard SASA calculations instead.
 
 <details>
 <summary>Installing build tools if needed</summary>

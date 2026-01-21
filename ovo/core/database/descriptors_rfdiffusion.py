@@ -211,12 +211,19 @@ PYROSETTA_BUNS = NumericGlobalDescriptor(
     description="Buried unsatisfied hydrogen bonds at the interface (ddG-style). Uses DAlphaBall rotation-invariant SASA if available (via 'ovo init dalphaball'), otherwise standard SASA. Calculated as bound - unbound buried unsats. Lower is better.",
     tool="PyRosetta",
     key="pyrosetta_interface_metrics|pyrosetta|buns_heavy_ball_1.1D",
-    comparison="lower_is_better",
-    goodness_threshold=4,
-    histogram_bin_size=1,
+    comparison="lower_is_better"
 )
 
-PYROSETTA_INTERFACE_DESCRIPTORS = [PYROSETTA_DDG, PYROSETTA_CMS, PYROSETTA_SAP_SCORE, PYROSETTA_BUNS]
+PYROSETTA_HBONDS_INT = NumericGlobalDescriptor(
+    name="Interface H-bonds",
+    description="Total number of hydrogen bonds at the binder-target interface.",
+    tool="PyRosetta",
+    key="pyrosetta_interface_metrics|pyrosetta|hbonds_int",
+    comparison="higher_is_better",
+    min_value=0,
+)
+
+PYROSETTA_INTERFACE_DESCRIPTORS = [PYROSETTA_DDG, PYROSETTA_CMS, PYROSETTA_SAP_SCORE, PYROSETTA_BUNS, PYROSETTA_HBONDS_INT]
 
 DESCRIPTORS = [v for v in globals().values() if isinstance(v, Descriptor)]
 

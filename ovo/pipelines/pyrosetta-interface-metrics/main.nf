@@ -27,6 +27,7 @@ process PyRosettaInterfaceMetrics {
   python3 ${moduleDir}/bin/pyrosetta_interface_metrics.py \
     ${pdb_dir} \
 	${batch_name}/pyrosetta_interface_metrics.jsonl \
+	--reference-files-dir ${params.reference_files_dir} \
 	${relax ? "--relax --out-pdb ${batch_name}/relaxed_pdb" : ""}
   """
 }

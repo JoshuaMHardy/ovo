@@ -5,11 +5,11 @@
 # Usage:
 #   ./scripts/build_dalphaball.sh [install_dir]
 #
-# If install_dir is not provided, installs to $OVO_HOME/bin/DAlphaBall
+# If install_dir is not provided, installs to $OVO_HOME/reference_files/bin/DAlphaBall
 
 set -euo pipefail
 
-INSTALL_DIR="${1:-${OVO_HOME:-$HOME/ovo}/bin}"
+INSTALL_DIR="${1:-${OVO_HOME:-$HOME/ovo}/reference_files/bin}"
 ROSETTA_URL="https://github.com/RosettaCommons/rosetta.git"
 TEMP_DIR=$(mktemp -d)
 
