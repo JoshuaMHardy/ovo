@@ -223,7 +223,17 @@ PYROSETTA_HBONDS_INT = NumericGlobalDescriptor(
     min_value=0,
 )
 
-PYROSETTA_INTERFACE_DESCRIPTORS = [PYROSETTA_DDG, PYROSETTA_CMS, PYROSETTA_SAP_SCORE, PYROSETTA_BUNS, PYROSETTA_HBONDS_INT]
+PYROSETTA_INTERFACE_SC = NumericGlobalDescriptor(
+    name="Interface Shape Complementarity",
+    description="Shape complementarity score at the binder-target interface. Values range from 0 (poor fit) to 1 (perfect fit).",
+    tool="PyRosetta",
+    key="pyrosetta_interface_metrics|pyrosetta|interface_sc",
+    comparison="higher_is_better",
+    min_value=0,
+    max_value=1,
+)
+
+PYROSETTA_INTERFACE_DESCRIPTORS = [PYROSETTA_DDG, PYROSETTA_CMS, PYROSETTA_SAP_SCORE, PYROSETTA_BUNS, PYROSETTA_HBONDS_INT, PYROSETTA_INTERFACE_SC]
 
 DESCRIPTORS = [v for v in globals().values() if isinstance(v, Descriptor)]
 
