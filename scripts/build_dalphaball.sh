@@ -12,7 +12,7 @@
 set -euo pipefail
 
 INSTALL_DIR="${1:-${OVO_HOME:-$HOME/ovo}/bin}"
-ROSETTA_URL="https://github.com/RosettaCommons/rosetta.git"
+DALPHABALL_URL="https://github.com/outpace-bio/DAlphaBall.git"
 TEMP_DIR=$(mktemp -d)
 
 echo "═══════════════════════════════════════════════════════"
@@ -24,7 +24,7 @@ echo "      Container users (Apptainer/Singularity/Docker) already have"
 echo "      DAlphaBall included in the PyRosetta container."
 echo ""
 echo "This script will:"
-echo "  1. Clone Rosetta source (DAlphaBall subdirectory only)"
+echo "  1. Clone DAlphaBall source"
 echo "  2. Compile DAlphaBall"
 echo "  3. Install to: $INSTALL_DIR"
 echo ""
@@ -41,29 +41,21 @@ for cmd in git make gcc gfortran; do
     fi
 done
 
-echo "Cloning Rosetta DAlphaBall source..."
+echo "Cloning DAlphaBall source..."
 cd "$TEMP_DIR"
-git clone --depth 1 --filter=blob:none --sparse "$ROSETTA_URL"
-cd rosetta
-git sparse-checkout set source/external/DAlpahBall
+git clone --depth 1 "$DALPHABALL_URL"
+cd DAlphaBall/src
 
 echo ""
 echo "Compiling DAlphaBall..."
-cd source/external/DAlpahBall
 
-# Detect platform
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    COMPILER_SUFFIX="macgcc"
-else
-    COMPILER_SUFFIX="gcc"
-fi
-
-# Use gfortran as the linker (fixes linking issues)
-sed -i 's/^LD = gcc$/LD = gfortran/' Makefile
+# Set compiler environment variables (Makefile expects these)
+export FC=gfortran
+export CC=gcc
 
 make
 
-EXECUTABLE="DAlphaBall.${COMPILER_SUFFIX}"
+EXECUTABLE="DAlphaBall.gcc"
 if [ ! -f "$EXECUTABLE" ]; then
     echo "Error: Compilation failed - $EXECUTABLE not found"
     exit 1

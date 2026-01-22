@@ -50,8 +50,6 @@ def find_dalphaball():
     1. DALPHABALL_PATH environment variable (set by container)
     2. $OVO_HOME/bin/ (user-compiled via 'ovo init dalphaball')
     """
-    import platform
-    
     # 1. Check environment variable (used by containers)
     env_path = os.environ.get("DALPHABALL_PATH")
     if env_path and os.path.isfile(env_path):
@@ -60,13 +58,7 @@ def find_dalphaball():
     # 2. Check OVO_HOME/bin (where ovo init dalphaball installs it)
     ovo_home = os.environ.get("OVO_HOME")
     if ovo_home:
-        # Detect platform-specific executable name
-        if platform.system() == "Darwin":
-            executable = "DAlphaBall.macgcc"
-        else:
-            executable = "DAlphaBall.gcc"
-        
-        standard_path = os.path.join(ovo_home, "bin", executable)
+        standard_path = os.path.join(ovo_home, "bin", "DAlphaBall.gcc")
         if os.path.isfile(standard_path):
             return standard_path
     

@@ -342,13 +342,12 @@ def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation
     console.print("[bold]Building DAlphaBall[/bold]")
     console.print("DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter.")
     console.print("")
-    console.print("[dim]Note: Container users (Apptainer/Singularity/Docker) don't need this -")
-    console.print("      DAlphaBall is included in the PyRosetta container.[/dim]")
+    console.print("[dim]Note: Container users (Apptainer/Singularity/Docker) don't need this -\n      DAlphaBall is included in the PyRosetta container.[/dim]")
     console.print("")
 
     # Set default install directory to $OVO_HOME/bin
     if install_dir is None:
-        install_dir = os.path.join(config.ovo_home, "bin")
+        install_dir = os.path.join(config.dir, "bin")
     install_dir = os.path.abspath(os.path.expanduser(install_dir))
 
     # Get path to build script
@@ -364,14 +363,7 @@ def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation
     except subprocess.CalledProcessError as e:
         raise OVOCliError(f"Failed to build DAlphaBall: {e}")
 
-    # Detect the executable name
-    import platform
-    if platform.system() == "Darwin":
-        executable_name = "DAlphaBall.macgcc"
-    else:
-        executable_name = "DAlphaBall.gcc"
-    
-    dalphaball_path = os.path.join(install_dir, executable_name)
+    dalphaball_path = os.path.join(install_dir, "DAlphaBall.gcc")
     
     if not os.path.exists(dalphaball_path):
         raise OVOCliError(f"DAlphaBall executable not found after build: {dalphaball_path}")
