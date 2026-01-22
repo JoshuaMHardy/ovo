@@ -334,7 +334,7 @@ def rfdiffusion(scheduler: str = None):
 
 @app.command()
 def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation directory for DAlphaBall executable")):
-    """Build and configure DAlphaBall for accurate buried unsat calculations"""
+    """Build DAlphaBall locally for conda users (container users don't need this)"""
     from ovo import config
     import subprocess
     import yaml
@@ -342,10 +342,13 @@ def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation
     console.print("[bold]Building DAlphaBall[/bold]")
     console.print("DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter.")
     console.print("")
+    console.print("[dim]Note: Container users (Apptainer/Singularity/Docker) don't need this -")
+    console.print("      DAlphaBall is included in the PyRosetta container.[/dim]")
+    console.print("")
 
-    # Set default install directory to reference_files/bin (follows OVO design pattern)
+    # Set default install directory to $OVO_HOME/bin
     if install_dir is None:
-        install_dir = os.path.join(config.reference_files_dir, "bin")
+        install_dir = os.path.join(config.ovo_home, "bin")
     install_dir = os.path.abspath(os.path.expanduser(install_dir))
 
     # Get path to build script

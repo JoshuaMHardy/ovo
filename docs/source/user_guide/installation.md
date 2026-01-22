@@ -133,35 +133,41 @@ Please refer to [Schedulers](../user_guide/schedulers.md) for instructions.
 
 ### 6. Optional enhancements
 
-#### DAlphaBall for accurate buried unsatisfied H-bond calculations (optional)
+#### DAlphaBall for accurate buried unsatisfied H-bond calculations
 
-For binder designs with PyRosetta interface metrics, you can optionally install DAlphaBall to get more accurate buried unsatisfied hydrogen bond calculations using rotation-invariant SASA:
+DAlphaBall provides rotation-invariant SASA calculations for more accurate buried unsatisfied hydrogen bond metrics in binder designs.
+
+**Container users (Apptainer/Singularity/Docker):** DAlphaBall is already included in the PyRosetta container. No action needed.
+
+**Conda users:** You can optionally build DAlphaBall locally:
 
 ```bash
 ovo init dalphaball
 ```
 
-This requires build tools (`git`, `make`, `g++`, `gfortran`). The executable will be installed to `$OVO_HOME/reference_files/bin/` and automatically detected by OVO pipelines. If not installed, OVO will use standard SASA calculations instead.
+This requires build tools (`git`, `make`, `gcc`, `gfortran`, `libgmp`). The executable will be installed to `$OVO_HOME/bin/` and automatically detected by OVO pipelines.
 
 <details>
-<summary>Installing build tools if needed</summary>
+<summary>Installing build tools</summary>
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt-get install build-essential gfortran
+sudo apt-get install build-essential gfortran libgmp-dev
 ```
 
 **macOS:**
 ```bash
 xcode-select --install
-brew install gcc
+brew install gcc gmp
 ```
 
 **Conda:**
 ```bash
-conda install -c conda-forge gfortran gmp
+conda install -c conda-forge gxx gfortran gmp
 ```
 </details>
+
+If DAlphaBall is not available, OVO will use standard SASA calculations instead.
 
 ### 7. Run the OVO web app
 

@@ -1,21 +1,27 @@
 #!/bin/bash
-# Script to build DAlphaBall for OVO
+# Script to build DAlphaBall for OVO (local conda users)
 # DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter
+#
+# Note: Container users don't need this - DAlphaBall is included in the PyRosetta container.
 #
 # Usage:
 #   ./scripts/build_dalphaball.sh [install_dir]
 #
-# If install_dir is not provided, installs to $OVO_HOME/reference_files/bin/DAlphaBall
+# If install_dir is not provided, installs to $OVO_HOME/bin/
 
 set -euo pipefail
 
-INSTALL_DIR="${1:-${OVO_HOME:-$HOME/ovo}/reference_files/bin}"
+INSTALL_DIR="${1:-${OVO_HOME:-$HOME/ovo}/bin}"
 ROSETTA_URL="https://github.com/RosettaCommons/rosetta.git"
 TEMP_DIR=$(mktemp -d)
 
 echo "═══════════════════════════════════════════════════════"
 echo "Building DAlphaBall for OVO"
 echo "═══════════════════════════════════════════════════════"
+echo ""
+echo "Note: This is only needed for local conda users."
+echo "      Container users (Apptainer/Singularity/Docker) already have"
+echo "      DAlphaBall included in the PyRosetta container."
 echo ""
 echo "This script will:"
 echo "  1. Clone Rosetta source (DAlphaBall subdirectory only)"
@@ -24,13 +30,13 @@ echo "  3. Install to: $INSTALL_DIR"
 echo ""
 
 # Check for required tools
-for cmd in git make g++ gfortran; do
+for cmd in git make gcc gfortran; do
     if ! command -v $cmd &> /dev/null; then
         echo "Error: $cmd is not installed"
         echo "Please install build tools:"
-        echo "  - On Ubuntu/Debian: sudo apt-get install build-essential gfortran"
-        echo "  - On macOS: xcode-select --install && brew install gcc"
-        echo "  - With conda: conda install -c conda-forge gfortran gmp"
+        echo "  - On Ubuntu/Debian: sudo apt-get install build-essential gfortran libgmp-dev"
+        echo "  - On macOS: xcode-select --install && brew install gcc gmp"
+        echo "  - With conda: conda install -c conda-forge gxx gfortran gmp"
         exit 1
     fi
 done
@@ -45,12 +51,15 @@ echo ""
 echo "Compiling DAlphaBall..."
 cd source/external/DAlpahBall
 
-# Detect compiler and make
+# Detect platform
 if [[ "$OSTYPE" == "darwin"* ]]; then
     COMPILER_SUFFIX="macgcc"
 else
     COMPILER_SUFFIX="gcc"
 fi
+
+# Use gfortran as the linker (fixes linking issues)
+sed -i 's/^LD = gcc$/LD = gfortran/' Makefile
 
 make
 

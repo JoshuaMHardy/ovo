@@ -37,7 +37,6 @@ p.add_argument(
 p.add_argument("--relax", action="store_true", default=False, help="Relax structures before scoring")
 p.add_argument("--out-pdb", help="Save PDB structures to this directory after applying movers")
 p.add_argument("--debug", action="store_true", default=False, help="Exit on error")
-p.add_argument("--reference-files-dir", help="Directory containing reference files (model weights, executables)")
 args = p.parse_args()
 
 # Build PyRosetta init flags
@@ -45,18 +44,29 @@ init_flags = " -corrections::beta_nov16 -detect_disulf false -run:preserve_heade
 
 # Auto-detect DAlphaBall for accurate buried unsat calculations
 def find_dalphaball():
-    """Auto-detect DAlphaBall executable from OVO reference_files_dir"""
+    """Auto-detect DAlphaBall executable.
+    
+    Search order:
+    1. DALPHABALL_PATH environment variable (set by container)
+    2. $OVO_HOME/bin/ (user-compiled via 'ovo init dalphaball')
+    """
     import platform
     
-    reference_files_dir = args.reference_files_dir
-    if reference_files_dir:
+    # 1. Check environment variable (used by containers)
+    env_path = os.environ.get("DALPHABALL_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+    
+    # 2. Check OVO_HOME/bin (where ovo init dalphaball installs it)
+    ovo_home = os.environ.get("OVO_HOME")
+    if ovo_home:
         # Detect platform-specific executable name
         if platform.system() == "Darwin":
             executable = "DAlphaBall.macgcc"
         else:
             executable = "DAlphaBall.gcc"
         
-        standard_path = os.path.join(reference_files_dir, "bin", executable)
+        standard_path = os.path.join(ovo_home, "bin", executable)
         if os.path.isfile(standard_path):
             return standard_path
     
@@ -66,16 +76,11 @@ dalphaball_path = find_dalphaball()
 has_dalphaball = False
 
 if dalphaball_path:
-    if os.path.isfile(dalphaball_path):
-        init_flags += f" -holes:dalphaball {dalphaball_path}"
-        has_dalphaball = True
-        print(f"✓ DAlphaBall found: {dalphaball_path}")
-    else:
-        print(f"⚠ Warning: DAlphaBall path specified but not found: {dalphaball_path}")
-        print("  Using standard SASA instead")
+    init_flags += f" -holes:dalphaball {dalphaball_path}"
+    has_dalphaball = True
+    print(f"Using DAlphaBall for rotation-invariant SASA: {dalphaball_path}")
 else:
-    print("ℹ DAlphaBall not found, using standard SASA")
-    print("  Run 'ovo init dalphaball' for more accurate buried unsat calculations")
+    print("DAlphaBall not found, using standard SASA for buried unsat calculations")
 
 init(init_flags)
 parser = RosettaScriptsParser()
