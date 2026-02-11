@@ -337,7 +337,7 @@ def dalphaball(install_dir: str | None = typer.Argument(None, help="Installation
     """Build DAlphaBall locally for conda users (container users don't need this)"""
     from ovo import config
     import subprocess
-    import yaml
+
 
     console.print("[bold]Building DAlphaBall[/bold]")
     console.print("DAlphaBall provides rotation-invariant SASA calculations for PyRosetta BuriedUnsatHbonds filter.")

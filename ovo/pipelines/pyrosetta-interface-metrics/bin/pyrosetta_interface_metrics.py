@@ -85,6 +85,8 @@ with open(xml_template_path) as f:
 # Adjust dalphaball_sasa based on availability
 if has_dalphaball:
     # Change dalphaball_sasa="false" to dalphaball_sasa="true" to enable rotation-invariant SASA
+    if 'dalphaball_sasa="false"' not in xml_content:
+        raise ValueError("Expected 'dalphaball_sasa=\"false\"' not found in XML content")
     xml_content = xml_content.replace('dalphaball_sasa="false"', 'dalphaball_sasa="true"')
     # Write to temporary file
     temp_xml = tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False)
